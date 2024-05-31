@@ -1,0 +1,37 @@
+/* Adjustments to prevent overlap */
+.app-container {
+  display: flex;
+  height: 100vh;
+}
+
+.content-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-top: 64px; /* Adjust according to the height of your topbar */
+  padding-left: 250px; /* Adjust according to the width of your sidebar */
+}
+
+/* Ensure sidebar remains on top */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0; /* Adjust to match the height of the content */
+  width: 200px; /* Adjust width as needed */
+  padding: 10px 14px;
+  background: var(--sidebar-color);
+  transition: var(--tran-05);
+  z-index: 1000; /* Ensure sidebar is on top */
+}
+
+/* Adjustments for topbar */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 200px; /* Adjust according to the width of your sidebar */
+  right: 0;
+  height: 64px; /* Adjust according to your topbar height */
+  background-color: #ffffff;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.05);
+  z-index: 1000; /* Ensure topbar is on top */
+}

@@ -1,0 +1,41 @@
+/* ContactUs.css */
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .dashboard {
+    background: linear-gradient(135deg, #512222 0%, #512222 60%, #1a1b1a 60%, #1a1b1a 100%);
+    color: #fff; /* Set text color to a suitable contrast against the background */
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .head {
+    color: #141414; /* Text color for the header */
+    font-size: 50px;
+  }
+  
+  section {
+    margin-bottom: 30px;
+  }
+  
+  .contact-content, address {
+    color: #e6dcdc; /* Text color for paragraphs and addresses */
+    line-height: 1.6;
+    font-size: 30px;
+    font-weight: 600;
+  }
+  
+  footer {
+    text-align: center;
+    color: #fff; /* Text color for the footer */
+    margin-top: 30px;
+  }
+  
