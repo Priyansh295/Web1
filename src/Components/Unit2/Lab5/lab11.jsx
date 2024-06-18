@@ -3,6 +3,10 @@ import hljs from 'highlight.js/lib/core';
 import python from 'highlight.js/lib/languages/python';
 import 'highlight.js/styles/github.css';
 import 'ace-builds/webpack-resolver'; 
+import Img1 from './imgs/image1.png';
+import Img2 from './imgs/image2.png';
+import Img3 from './imgs/image3.png';
+import Img4 from './imgs/image4.png';
 import './lab11.css';
 
 hljs.registerLanguage('python', python);
@@ -317,85 +321,51 @@ const Lab2 = () => {
       <ParticleCanvas />
       <div className="Layout" style={{ display: "flex", justifyContent: "space-around", color: '#09F' }}>
       <div className="box3">
-      <h2>CNN Model for Image Classification Explained</h2>
+      <h2>XGBoost: Extreme Gradient Boosting Explained</h2> <br />
 
-      <p><strong onClick={() => handleHeadingClick("Step1")}>1. FEATURE EXTRACTION USING A PRE-TRAINED VGG16 and SPLITTING INTO TESTING AND TRAINING</strong></p> <br />
-      <p>Feature extraction using a pre-trained model involves using a neural network that has already 
-        been trained on a large dataset (like ImageNet) to identify and extract important characteristics
-        from new images. These characteristics, or features, can be patterns such as edges, textures, 
-        shapes, and more complex structures that the model has learned to recognize</p> <br />
-      <p>In summary, feature extraction with a pre-trained model is like using a very knowledgeable 
-        person's understanding of the world to quickly and effectively analyze new images, leveraging 
-        their expertise to recognize and describe important aspects of those images without having to 
-        start learning from scratch.</p> <br />
+      <p>XGBoost, short for "Extreme Gradient Boosting," is a scalable and highly efficient machine 
+        learning algorithm used for supervised learning tasks, including classification and regression. 
+        Developed by Tianqi Chen, XGBoost has become one of the most popular algorithms in the field 
+        due to its speed, performance, and versatility. Here's a detailed look into XGBoost, supported by 
+        theoretical explanations and illustrative images.</p> <br />
 
-      <p><strong onClick={() => handleHeadingClick("LoadData")}>2. </strong></p>
-      <p>We load our training and test datasets from CSV files using Pandas. The training data is 
-      stored in a variable called <b><i>train</i></b>, and the test data is stored in <b><i>test</i></b>.</p> <br />
-
-      <p><strong onClick={() => handleHeadingClick("explore")}>3. Explore Data</strong></p>
-      <p>To understand the structure and content of our data, we display the first 5 rows of the training 
-      dataset.</p> <br />
-
-      <p><strong onClick={() => handleHeadingClick("labels")}>4. Define Class Labels</strong></p>
-      <p>We define the class labels for the clothing items in our dataset. These labels represent the 
-      categories we aim to classify.</p> <br />
-
-      <p><strong onClick={() => handleHeadingClick("preprocess")}>5. Preprocess Data</strong></p>
-      <p>The data needs to be reshaped and normalized to be suitable for training our CNN model. 
-      Normalization ensures that all pixel values are between 0 and 1.</p> <br />
-
-      <p><strong onClick={() => handleHeadingClick("SplitData")}>6. : Split Data into Training and Validation Sets</strong></p>
-      <p>We split the training data into training and validation sets to evaluate the model's 
-      performance during training.</p> < br/>
-
-      <p><strong onClick={() => handleHeadingClick("DeepLearningModel")}>7. Build CNN Model:</strong></p>
-      <p>We construct a Convolutional Neural Network (CNN) using Keras. The model consists of 
-      several layers, including convolutional layers, pooling layers, and dense layers.</p> < br/>
-      <p> <b>Convolutional Neural Networks (CNNs):</b> CNNs are specialized neural networks 
-      for processing data with a grid-like topology, such as images. They automatically 
-      and adaptively learn spatial hierarchies of features through backpropagation</p> <br />
-
-      <p style={{marginLeft: '25px'}}><b>Convolutional layers:</b></p>
-      <p style={{marginLeft: '25px'}}> The core building block of a CNN is the convolutional 
-      layer. It applies filters to small regions of the input data, known as receptive fields. 
-      Each filter is a small matrix of weights that slides across the input data, performing a 
-      dot product with the input pixels. This process is known as convolution.</p> <br />
-      
-      <p>The output of the convolutional layer is a feature map, which is a two-dimensional 
-        representation of the input data. This feature map captures the presence of specific 
-        features in the input data, such as edges or lines</p> <br />
-
-      <p style={{marginLeft: '25px'}}><b>Pooling layers:</b></p>
-      <p style={{marginLeft: '25px'}}> A pooling layer in a neural network helps simplify 
-        and reduce the size of the data from the convolutional layer. By doing this, 
-        it decreases the number of details the network needs to handle, which makes the 
-        network faster and more efficient.</p> <br />
-      
-
-      <p style={{marginLeft: '25px'}}><b>Activation and Classification Layers:</b></p>
-      <p style={{marginLeft: '25px'}}> The output of the pooling layer is fed into an activation function, such as the Rectified Linear Unit (ReLU), which helps the network learn more complex features.</p> <br />
-      <p style={{marginLeft: '25px'}}>The final layer of the CNN is typically a fully connected layer that outputs a probability distribution over all classes, allowing the network to classify the input data.</p> <br />
-
-      <p><strong onClick={() => handleHeadingClick("TrainModel")}>8. Train Model:</strong></p> <br />
+      <h3>Theory Behind XGBoost</h3> <br />
       <ul>
-        <li> Feed the training images and their labels into the CNN.</li>
-        <li> The CNN learns to recognize patterns and features in the images through a process called backpropagation.</li>
-        <li> During training, the model's weights are adjusted to minimize the difference between its predictions and the true labels.</li>
+        <li><strong>Gradient Boosting Framework:</strong> XGBoost is based on the gradient boosting framework, 
+          which builds models sequentially. Each new model attempts to correct the errors of the 
+          previous models. The overall model is a weighted sum of all previous models.</li> <br />
+        <li><strong>Decision Trees:</strong> XGBoost primarily uses decision trees as its base learners. These are 
+          simple models that split the data into branches based on feature values to make 
+          predictions.</li> <br />
+        <li><strong>Boosting:</strong> Boosting is an ensemble technique that combines the outputs of several weak 
+          learners to create a strong learner. Each new model is trained to correct the errors made 
+          by the previous models, focusing more on the difficult-to-predict instances.</li> <br />
+        <li><strong>Gradient Descent:</strong> In XGBoost, the new models are fit on the negative gradient of the 
+          loss function. This means each new model aims to reduce the errors (residuals) of the 
+          previous models by moving in the direction of the steepest descent (gradient) of the loss 
+          function.</li> <br />
       </ul> <br />
-      
-      <p><strong onClick={() => handleHeadingClick("TestModel")}>9. Test Model</strong></p> <br />
-      <ul>
-        <li> Feed the test images into the trained CNN model. </li>
-        <li> Compare the model's predictions to the true labels to calculate metrics like accuracy, precision, and recall</li>
-      </ul> <br />
+      <img style={{width: '100%'}} src={Img1} alt="image1" /> <br /> <br />
 
-      <p><strong onClick={() => handleHeadingClick("Evaluate")}>10. Evaluate the Model:</strong></p>
-      <p>After training, we evaluate the model on the validation set to see how well it performs.</p> < br/>
+      <h3>Mathematical Formulation and Visual Illustration</h3> <br />
+      <img style={{width: '100%'}} src={Img2} alt="image2" /> <br /> <br />
+      <p><strong>Gradient Boosting Process:</strong></p>
+      <ol>
+        <li><strong>Step 1:</strong> Start with an initial prediction (e.g., the mean of the target values).</li> <br />
+        <li><strong>Step 2:</strong> Compute the residuals (errors) between the actual and predicted values.</li> <br />
+        <li><strong>Step 3:</strong> Fit a new model to the residuals.</li> <br />
+        <li><strong>Step 4:</strong> Update the predictions by adding the new model's predictions, scaled by a 
+          learning rate.</li> <br />
+        <li><strong>Step 5:</strong> Repeat steps 2-4 for a specified number of iterations or until the residuals are 
+          minimized.</li> <br />
+      </ol>
 
-      <p><strong onClick={() => handleHeadingClick("SaveModel")}>7. Save and Load the Model:</strong></p>
-      <p>The code saves the trained model to a file for future use. It can be loaded back into memory later to make predictions on new data.</p> <br />
-      </div>
+      <p><strong>Decision Tree Example:</strong></p> <br />
+      <img style={{width: '100%'}} src={Img3} alt="image3" /> <br /> <br />
+      <p>XGBoost uses decision trees as base learners. Each tree splits the data based on 
+        feature values to make predictions.</p> <br />
+        <img style={{width: '100%'}} src={Img4} alt="image4" /> <br /> <br />
+    </div>
 
         <div className="box4">
           <div className="code-container">
@@ -409,7 +379,7 @@ const Lab2 = () => {
       </div>
       <div> 
           <button className="button">
-          <a href="https://www.kaggle.com/code/priyansh2904/lab-5?scriptVersionId=182441640" target="_blank"> View Runable code</a>
+          <a href="https://www.kaggle.com/code/priyanshsurana/notebook7ea446b9bf?scriptVersionId=183970208" target="_blank"> View Runable code</a>
           </button>
         </div>
       </div>

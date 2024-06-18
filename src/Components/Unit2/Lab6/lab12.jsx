@@ -3,129 +3,348 @@ import hljs from 'highlight.js/lib/core';
 import python from 'highlight.js/lib/languages/python';
 import 'highlight.js/styles/github.css';
 import 'ace-builds/webpack-resolver'; 
+import Img1 from './imgs/image1.png';
+import Img2 from './imgs/image2.png';
+import Img3 from './imgs/image3.png';
 import './lab12.css';
 
 hljs.registerLanguage('python', python);
 
 const codeSnippet2 = `
-# 1. Import Libraries
+import pandas as pd
+import numpy as np
+
+# Parameters
+n_samples = 1000
+
+# Generate data
+np.random.seed(42)
+temperature = np.random.normal(loc=25, scale=5, size=n_samples)
+pressure = np.random.normal(loc=1, scale=0.2, size=n_samples)
+vibration = np.random.normal(loc=0.01, scale=0.005, size=n_samples)
+
+# Classify data as healthy or unhealthy
+def classify(temperature, pressure, vibration):
+    if temperature > 30 or pressure > 1.2 or vibration > 0.02:
+        return 'unhealthy'
+    else:
+        return 'healthy'
+
+data = pd.DataFrame({
+    'temperature': temperature,
+    'pressure': pressure,
+    'vibration': vibration
+})
+data['status'] = data.apply(lambda row: classify(row['temperature'], row['pressure'], row['vibration']), axis=1)
+
+# Save training data
+data.to_csv('training_data.csv', index=False)
+print("Training data generated and saved to 'training_data.csv'")
+
+data = pd.read_csv('training_data.csv')
+data.head()
+
+# Extract features and labels
+X = data[['temperature', 'pressure', 'vibration']]
+y = data['status']
+
+# Convert labels to numerical values
+y = y.map({'healthy': 0, 'unhealthy': 1})
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Initialize the model
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+
+# Train the model
+model.fit(X_train, y_train)
+
+# Evaluate the model
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print(f'Model Accuracy: {accuracy:.2f}')
 
 import numpy as np
+
+def real_time_data_generator():
+    while True:
+        temperature = np.random.normal(loc=25, scale=5)
+        pressure = np.random.normal(loc=1, scale=0.2)
+        vibration = np.random.normal(loc=0.01, scale=0.005)
+        yield {'temperature': temperature, 'pressure': pressure, 'vibration': vibration}
+
+import joblib
+
+# Save the model to a file
+joblib.dump(model, 'equipment_monitoring_model.pkl')
+print("Model saved to 'equipment_monitoring_model.pkl'")
+
+import dash
+import dash_core_components as dcc
+import dash_html_components as html
+import plotly.graph_objs as go
+from dash.dependencies import Input, Output
+from collections import deque
 import pandas as pd
-import tensorflow as tf
-from tensorflow import keras
-from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt 
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Dropout
-from sklearn.metrics import classification_report, accuracy_score
+import numpy as np
+import joblib
+import time
 
-# 2. Load Data
+# Load the trained model
+model = joblib.load('equipment_monitoring_model.pkl')
 
-train = pd.read_csv("./datasets/fashion-mnist_train.csv")
-test = pd.read_csv("./datasets/fashion-mnist_test.csv")
+# Initialize the app
+app = dash.Dash(__name__)
 
-train.head()
+# Create a deque to hold the real-time data
+window_size = 30  # Define the size of the sliding window (30 seconds)
+data_deque = deque(maxlen=window_size)
+error_timestamps = deque(maxlen=1000)  # Keep track of error timestamps
 
-# The catagories of clothing were in dataset
-class_labels= ["T-shirt/top","Trouser","Pullover" ,"Dress","Coat" ,"Sandal" ,"Shirt" ,"Sneaker" ,"Bag" ,"Ankle boot"]
+# Function to update the deque with new data
+def update_data():
+    generator = real_time_data_generator()
+    while True:
+        new_data = next(generator)
+        data_deque.append(new_data)
+        yield
 
-test.head()
+# Create a data generator
+data_gen = update_data()
 
-# store data as an array 
-train_data = np.array(train, dtype= "float32")
-test_data = np.array(test, dtype= "float32")
+# Define the layout of the app
+app.layout = html.Div(children=[
+    html.H1(children='Real-Time Industrial Equipment Monitoring Dashboard'),
 
-x_train = train_data[:, 1:]
-y_train = train_data[:, 0]
+    dcc.Graph(id='temperature-graph'),
+    dcc.Graph(id='pressure-graph'),
+    dcc.Graph(id='vibration-graph'),
 
-x_test = test_data[:, 1:]
-y_test = test_data[:, 0]
-
-# arrange pixel values between 0 to 1 
-x_train = x_train/255
-x_test = x_test/255
-
-# 3. Split Data
-
-x_train , x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.2)
-
-x_train = x_train.reshape(x_train.shape[0], 28, 28, 1)
-x_test = x_test.reshape(x_test.shape[0], 28, 28, 1)
-x_val = x_val.reshape(x_val.shape[0], 28, 28, 1)
-
-plt.imshow(x_train[1])
-print(y_train[1])
-
-# 4. Build a Deep Learning Model and Train the Model
-
-model = Sequential([
-    Conv2D(filters=32, kernel_size=3, strides=(1,1), padding='valid', activation='relu', input_shape=(28, 28, 1)),
-    MaxPooling2D(pool_size=(2,2)),
-    Conv2D(filters=64, kernel_size=3, strides=(2,2), padding='same', activation='relu'),
-    MaxPooling2D(pool_size=(2,2)),
-    Flatten(),
-    Dense(128, activation='relu'),
-    Dropout(0.25),
-    Dense(256, activation='relu'),
-    Dropout(0.25),
-    Dense(128, activation='relu'),
-    Dense(10, activation='softmax')  
+    html.Div(id='status-container', style={'textAlign': 'center', 'marginTop': '20px', 'width': '100%', 'padding': '0'}),
+    
+    html.Div(id='additional-info', style={'display': 'flex', 'justifyContent': 'space-around', 'marginTop': '20px', 'width': '100%'}),
+    
+    dcc.Interval(
+        id='interval-component',
+        interval=1000,  # in milliseconds (1 second)
+        n_intervals=0
+    )
 ])
 
-model.compile(optimizer='adam', 
-                loss=tf.keras.losses.SparseCategoricalCrossentropy(),  # Use SparseCategoricalCrossentropy for multi-class classification
-                metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
+def get_status_style(status):
+    if status == 0:
+        return {
+            'backgroundColor': '#98FB98',  # pastel green
+            'color': '#006400',  # dark green text
+            'padding': '20px',
+            'borderRadius': '10px',
+            'width': '96.3%',
+            'textAlign': 'center',
+            'margin': '0'
+        }
+    else:
+        return {
+            'backgroundColor': '#FFCCCB',  # pastel red
+            'color': '#8B0000',  # dark red text
+            'padding': '20px',
+            'borderRadius': '10px',
+            'width': '96.3%',
+            'textAlign': 'center',
+            'margin': '0'
+        }
 
+def get_status_color_and_text(status):
+    if status == 0:
+        return 'Healthy'
+    else:
+        return 'Unhealthy'
 
-model.fit(x_train, y_train, epochs=20, batch_size=16, verbose=1, validation_data=(x_val, y_val))
+def get_time_since_last_error():
+    if error_timestamps:
+        return time.time() - error_timestamps[-1]
+    return float('inf')
 
-# 5. Test Model
+def get_error_count_last_10_seconds():
+    current_time = time.time()
+    count = sum(1 for timestamp in error_timestamps if current_time - timestamp <= 10)
+    return count
 
-y_pred = model.predict(x_test)
+# Update temperature graph
+@app.callback(
+    Output('temperature-graph', 'figure'),
+    [Input('interval-component', 'n_intervals')]
+)
+def update_temperature_graph(n):
+    next(data_gen)  # Update the deque with new data
+    df = pd.DataFrame(data_deque)
+    if df.empty:
+        return go.Figure()  # Return an empty figure if no data
 
-model.evaluate(x_test, y_test)
+    z = df['temperature']
+    figure = {
+        'data': [
+            go.Scatter(
+                x=list(range(n-len(df), n)),
+                y=df['temperature'],
+                mode='lines+markers',
+                marker=dict(
+                    size=10,
+                    color=z,
+                    colorscale='RdBu_r',  # Inverted RdBu colorscale
+                    showscale=True,
+                    colorbar=dict(title='Temperature')
+                ),
+                line=dict(
+                    color='black',
+                    width=2
+                ),
+                name='Temperature'
+            )
+        ],
+        'layout': go.Layout(
+            title='Temperature Over Time',
+            xaxis=dict(title='Time'),
+            yaxis=dict(title='Temperature (°C)'),
+            xaxis_range=[max(0, n-window_size), n]  # Sliding window
+        )
+    }
+    return figure
 
-# Plot the training and validation accuracy and loss
-import matplotlib.pyplot as plt
+# Update pressure graph
+@app.callback(
+    Output('pressure-graph', 'figure'),
+    [Input('interval-component', 'n_intervals')]
+)
+def update_pressure_graph(n):
+    df = pd.DataFrame(data_deque)
+    if df.empty:
+        return go.Figure()  # Return an empty figure if no data
 
-plt.figure(figsize= (16,30))
-j=1
+    z = df['pressure']
+    figure = {
+        'data': [
+            go.Scatter(
+                x=list(range(n-len(df), n)),
+                y=df['pressure'],
+                mode='lines+markers',
+                marker=dict(
+                    size=10,
+                    color=z,
+                    colorscale='Viridis',
+                    showscale=True,
+                    colorbar=dict(title='Pressure')
+                ),
+                line=dict(
+                    color='black',
+                    width=2
+                ),
+                name='Pressure'
+            )
+        ],
+        'layout': go.Layout(
+            title='Pressure Over Time',
+            xaxis=dict(title='Time'),
+            yaxis=dict(title='Pressure (atm)'),
+            xaxis_range=[max(0, n-window_size), n]  # Sliding window
+        )
+    }
+    return figure
 
-for i in np.random.randint(0, 1000,60):
-    plt.subplot(10,6, j)
-    j+=1
-    plt.imshow(x_test[i].reshape(28,28), cmap='Greys')
-    plt.title('Actual = {} / {} \nPredicted = {} / {}'.format(class_labels[int(y_test[i])], int(y_test[i]), class_labels[np.argmax(y_pred[i])], np.argmax(y_pred[i])))
-    plt.axis('off')
+# Update vibration graph
+@app.callback(
+    Output('vibration-graph', 'figure'),
+    [Input('interval-component', 'n_intervals')]
+)
+def update_vibration_graph(n):
+    df = pd.DataFrame(data_deque)
+    if df.empty:
+        return go.Figure()  # Return an empty figure if no data
 
+    z = df['vibration']
+    figure = {
+        'data': [
+            go.Scatter(
+                x=list(range(n-len(df), n)),
+                y=df['vibration'],
+                mode='lines+markers',
+                marker=dict(
+                    size=10,
+                    color=z,
+                    colorscale='Viridis',
+                    showscale=True,
+                    colorbar=dict(title='Vibration')
+                ),
+                line=dict(
+                    color='black',
+                    width=2
+                ),
+                name='Vibration'
+            )
+        ],
+        'layout': go.Layout(
+            title='Vibration Over Time',
+            xaxis=dict(title='Time'),
+            yaxis=dict(title='Vibration (m/s^2)'),
+            xaxis_range=[max(0, n-window_size), n]  # Sliding window
+        )
+    }
+    return figure
 
-# 6. Evaluate 
+# Update status indicator
+@app.callback(
+    Output('status-container', 'children'),
+    [Input('interval-component', 'n_intervals')]
+)
+def update_status_indicator(n):
+    df = pd.DataFrame(data_deque)
+    if not df.empty:
+        # Make sure to use a DataFrame with the same feature names as used during training
+        latest_data = df[['temperature', 'pressure', 'vibration']].iloc[-1].to_frame().T
+        current_status = model.predict(latest_data)[0]
+        status_text = get_status_color_and_text(current_status)
+        status_style = get_status_style(current_status)
+        
+        if current_status == 1:
+            error_timestamps.append(time.time())
+        
+        return html.Div(f'Current Status: {status_text}', style=status_style)
+    else:
+        return html.Div('No Data', style={'backgroundColor': 'black', 'color': 'white', 'padding': '20px', 'borderRadius': '10px', 'textAlign': 'center', 'width': '100%', 'margin': '0'})
 
-# Convert one-hot encoded labels to class indices if needed
-if y_test.ndim == 2 and y_test.shape[1] > 1:
-    y_test_indices = np.argmax(y_test, axis=1)
-else:
-    y_test_indices = y_test  # If y_test is already in integer form
+# Update additional info
+@app.callback(
+    Output('additional-info', 'children'),
+    [Input('interval-component', 'n_intervals')]
+)
+def update_additional_info(n):
+    time_since_last_error = get_time_since_last_error()
+    error_count_last_10_seconds = get_error_count_last_10_seconds()
+    
+    time_since_last_error_text = f'Time Since Last Error: {time_since_last_error:.2f} seconds'
+    error_count_text = f'Number of Errors in Last 10 Seconds: {error_count_last_10_seconds}'
+    
+    return [
+        html.Div(time_since_last_error_text, style={'backgroundColor': '#E0E0E0', 'padding': '20px', 'borderRadius': '10px', 'textAlign': 'center', 'width': '45%', 'color': 'black', 'margin': '0'}),
+        html.Div(error_count_text, style={'backgroundColor': '#E0E0E0', 'padding': '20px', 'borderRadius': '10px', 'textAlign': 'center', 'width': '45%', 'color': 'black', 'margin': '0'})
+    ]
 
-# Convert y_pred to class indices
-y_pred_indices = np.argmax(y_pred, axis=1)
+# Real-time data generator function
+def real_time_data_generator():
+    while True:
+        temperature = np.random.normal(loc=25, scale=5)
+        pressure = np.random.normal(loc=1, scale=0.2)
+        vibration = np.random.normal(loc=0.01, scale=0.005)
+        yield {'temperature': temperature, 'pressure': pressure, 'vibration': vibration}
 
-# Generate the classification report
-cr = classification_report(y_test_indices, y_pred_indices, target_names=class_labels)
-print(cr)
+# Run the app
+if __name__ == '__main__':
+    app.run_server(debug=True)
 
-# Calculate and print the overall accuracy
-accuracy = accuracy_score(y_test_indices, y_pred_indices)
-print(f"Overall Accuracy: {accuracy}")
-
-# 7. Save Model
-
-model.save('fashion_mnist_cnn_model.h5')
-
-#Load Model
-
-fashion_model = tf.keras.models.load_model('fashion_mnist_cnn_model.h5')
 `;
 
 const codeSections = {
@@ -317,84 +536,47 @@ const Lab2 = () => {
       <ParticleCanvas />
       <div className="Layout" style={{ display: "flex", justifyContent: "space-around", color: '#09F' }}>
       <div className="box3">
-      <h2>CNN Model for Image Classification Explained</h2>
+        <h2>Industrial Equipment Monitoring System</h2> <br />
 
-      <p><strong onClick={() => handleHeadingClick("Step1")}>1. FEATURE EXTRACTION USING A PRE-TRAINED VGG16 and SPLITTING INTO TESTING AND TRAINING</strong></p> <br />
-      <p>Feature extraction using a pre-trained model involves using a neural network that has already 
-        been trained on a large dataset (like ImageNet) to identify and extract important characteristics
-        from new images. These characteristics, or features, can be patterns such as edges, textures, 
-        shapes, and more complex structures that the model has learned to recognize</p> <br />
-      <p>In summary, feature extraction with a pre-trained model is like using a very knowledgeable 
-        person's understanding of the world to quickly and effectively analyze new images, leveraging 
-        their expertise to recognize and describe important aspects of those images without having to 
-        start learning from scratch.</p> <br />
+        <p><strong>Step 1: Generate Training Data</strong><br/>
+        Synthetic sensor readings are generated to simulate temperature, pressure, and vibration from industrial equipment. Data points are classified as 'healthy' or 'unhealthy' based on defined conditions.</p> <br />
 
-      <p><strong onClick={() => handleHeadingClick("LoadData")}>2. </strong></p>
-      <p>We load our training and test datasets from CSV files using Pandas. The training data is 
-      stored in a variable called <b><i>train</i></b>, and the test data is stored in <b><i>test</i></b>.</p> <br />
+        <p><strong>Step 2: Save Training Data</strong><br/>
+        Data is saved to a CSV file named 'training_data.csv'.</p> <br />
 
-      <p><strong onClick={() => handleHeadingClick("explore")}>3. Explore Data</strong></p>
-      <p>To understand the structure and content of our data, we display the first 5 rows of the training 
-      dataset.</p> <br />
+        <p><strong>Step 3: Load and Preprocess Data</strong><br/>
+        The code loads the training data, converting the 'status' column into numerical values.</p> <br />
 
-      <p><strong onClick={() => handleHeadingClick("labels")}>4. Define Class Labels</strong></p>
-      <p>We define the class labels for the clothing items in our dataset. These labels represent the 
-      categories we aim to classify.</p> <br />
+        <p><strong>Step 4: Split Data into Training and Testing Sets</strong><br/>
+        The data is split using the train_test_split function, setting aside 20% for testing.</p> <br />
 
-      <p><strong onClick={() => handleHeadingClick("preprocess")}>5. Preprocess Data</strong></p>
-      <p>The data needs to be reshaped and normalized to be suitable for training our CNN model. 
-      Normalization ensures that all pixel values are between 0 and 1.</p> <br />
+        <p><strong>Step 5: Train the Model</strong><br/>
+        A Random Forest classifier is trained with parameters set for 100 trees and a random state of 42.</p> <br />
 
-      <p><strong onClick={() => handleHeadingClick("SplitData")}>6. : Split Data into Training and Validation Sets</strong></p>
-      <p>We split the training data into training and validation sets to evaluate the model's 
-      performance during training.</p> < br/>
+        <p><strong>Step 6: Evaluate the Model</strong><br/>
+        Model performance is assessed on the testing data with accuracy metrics.</p> <br />
 
-      <p><strong onClick={() => handleHeadingClick("DeepLearningModel")}>7. Build CNN Model:</strong></p>
-      <p>We construct a Convolutional Neural Network (CNN) using Keras. The model consists of 
-      several layers, including convolutional layers, pooling layers, and dense layers.</p> < br/>
-      <p> <b>Convolutional Neural Networks (CNNs):</b> CNNs are specialized neural networks 
-      for processing data with a grid-like topology, such as images. They automatically 
-      and adaptively learn spatial hierarchies of features through backpropagation</p> <br />
+        <p><strong>Step 7: Save the Model</strong><br/>
+        The trained model is saved to 'equipment_monitoring_model.pkl' using joblib.</p> <br />
 
-      <p style={{marginLeft: '25px'}}><b>Convolutional layers:</b></p>
-      <p style={{marginLeft: '25px'}}> The core building block of a CNN is the convolutional 
-      layer. It applies filters to small regions of the input data, known as receptive fields. 
-      Each filter is a small matrix of weights that slides across the input data, performing a 
-      dot product with the input pixels. This process is known as convolution.</p> <br />
-      
-      <p>The output of the convolutional layer is a feature map, which is a two-dimensional 
-        representation of the input data. This feature map captures the presence of specific 
-        features in the input data, such as edges or lines</p> <br />
+        <p><strong>Step 8: Create the Dashboard</strong><br/>
+        A real-time dashboard is set up for monitoring, featuring graphs and a status indicator that updates based on the model's predictions.</p> <br />
 
-      <p style={{marginLeft: '25px'}}><b>Pooling layers:</b></p>
-      <p style={{marginLeft: '25px'}}> A pooling layer in a neural network helps simplify 
-        and reduce the size of the data from the convolutional layer. By doing this, 
-        it decreases the number of details the network needs to handle, which makes the 
-        network faster and more efficient.</p> <br />
-      
+        <p><strong>Step 9: Update Data</strong><br/>
+        Data is continuously updated in real-time simulating sensor readings.</p> <br />
 
-      <p style={{marginLeft: '25px'}}><b>Activation and Classification Layers:</b></p>
-      <p style={{marginLeft: '25px'}}> The output of the pooling layer is fed into an activation function, such as the Rectified Linear Unit (ReLU), which helps the network learn more complex features.</p> <br />
-      <p style={{marginLeft: '25px'}}>The final layer of the CNN is typically a fully connected layer that outputs a probability distribution over all classes, allowing the network to classify the input data.</p> <br />
+        <p><strong>Step 10: Update Graphs</strong><br/>
+        Graphs for temperature, pressure, and vibration are updated every second.</p> <br />
 
-      <p><strong onClick={() => handleHeadingClick("TrainModel")}>8. Train Model:</strong></p> <br />
-      <ul>
-        <li> Feed the training images and their labels into the CNN.</li>
-        <li> The CNN learns to recognize patterns and features in the images through a process called backpropagation.</li>
-        <li> During training, the model's weights are adjusted to minimize the difference between its predictions and the true labels.</li>
-      </ul> <br />
-      
-      <p><strong onClick={() => handleHeadingClick("TestModel")}>9. Test Model</strong></p> <br />
-      <ul>
-        <li> Feed the test images into the trained CNN model. </li>
-        <li> Compare the model's predictions to the true labels to calculate metrics like accuracy, precision, and recall</li>
-      </ul> <br />
+        <p><strong>Step 11: Update Status Indicator</strong><br/>
+        A status indicator updates in real-time to reflect the equipment's condition as 'healthy' or 'unhealthy'.</p> <br />
 
-      <p><strong onClick={() => handleHeadingClick("Evaluate")}>10. Evaluate the Model:</strong></p>
-      <p>After training, we evaluate the model on the validation set to see how well it performs.</p> < br/>
-
-      <p><strong onClick={() => handleHeadingClick("SaveModel")}>7. Save and Load the Model:</strong></p>
-      <p>The code saves the trained model to a file for future use. It can be loaded back into memory later to make predictions on new data.</p> <br />
+        <p><strong>Step 12: Run the Dashboard</strong><br/>
+        The dashboard runs, displaying real-time updates of the equipment's status.</p> <br />
+        <p>Here are some Pictures of the graph when you run them </p> <br />
+        <img style={{width: '100%'}} src={Img1} alt="image1" /> <br /> <br />
+        <img style={{width: '100%'}} src={Img2} alt="image2" /> <br /> <br />
+        <img style={{width: '100%'}} src={Img3} alt="image3" /> <br /> <br />
       </div>
 
         <div className="box4">
@@ -409,7 +591,7 @@ const Lab2 = () => {
       </div>
       <div> 
           <button className="button">
-          <a href="https://www.kaggle.com/code/priyansh2904/lab-5?scriptVersionId=182441640" target="_blank"> View Runable code</a>
+          <a href="https://www.kaggle.com/code/priyansh2904/unit3lab6?scriptVersionId=184180277" target="_blank"> View Runable code</a>
           </button>
         </div>
       </div>

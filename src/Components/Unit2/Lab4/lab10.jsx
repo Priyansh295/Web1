@@ -3,6 +3,21 @@ import hljs from 'highlight.js/lib/core';
 import python from 'highlight.js/lib/languages/python';
 import 'highlight.js/styles/github.css';
 import 'ace-builds/webpack-resolver'; 
+import Img1 from './imgs/image1.png';
+import Img2 from './imgs/image2.png';
+import Img3 from './imgs/image3.png';
+import Img4 from './imgs/image4.png';
+import Img5 from './imgs/image5.png';
+import Img6 from './imgs/image6.png';
+import Img7 from './imgs/image7.png';
+import Img8 from './imgs/image8.png';
+import Img9 from './imgs/image9.png';
+import Img10 from './imgs/image10.png';
+import Img11 from './imgs/image11.png';
+import Img12 from './imgs/image12.png';
+import Img13 from './imgs/image13.png';
+import Img14 from './imgs/image14.png';
+import Img15 from './imgs/image15.png';
 import './lab10.css';
 
 hljs.registerLanguage('python', python);
@@ -317,86 +332,53 @@ const Lab2 = () => {
       <ParticleCanvas />
       <div className="Layout" style={{ display: "flex", justifyContent: "space-around", color: '#09F' }}>
       <div className="box3">
-      <h2>CNN Model for Image Classification Explained</h2>
+          <h2>Decision Tree</h2> <br />
+          <p>A decision tree is a popular machine learning algorithm used for classification and regression tasks. It is a tree-like model of decisions and their possible consequences. Here’s a simple breakdown of how it works:</p> <br />
+          <ul>
+            <li><strong>Root Node:</strong> This is the topmost node in the tree, representing the entire dataset.</li>
+            <li><strong>Decision Nodes:</strong> These are nodes where the dataset is split into different subsets based on certain conditions.</li>
+            <li><strong>Leaf Nodes:</strong> These are terminal nodes that represent the final decision or output.</li>
+          </ul> <br />
+          <p>Each internal node of the tree represents a "test" or "decision" on an attribute (e.g., "Is depth {">"} 50?"), and each branch represents the outcome of that decision. The leaves represent the class labels or regression values.</p> <br />
+          <img style={{width: '100%'}} src={Img1} alt="image1" /> <br /> <br />
+          <img style={{width: '100%'}} src={Img2} alt="image2" /> <br /> <br />
 
-      <p><strong onClick={() => handleHeadingClick("Step1")}>1. FEATURE EXTRACTION USING A PRE-TRAINED VGG16 and SPLITTING INTO TESTING AND TRAINING</strong></p> <br />
-      <p>Feature extraction using a pre-trained model involves using a neural network that has already 
-        been trained on a large dataset (like ImageNet) to identify and extract important characteristics
-        from new images. These characteristics, or features, can be patterns such as edges, textures, 
-        shapes, and more complex structures that the model has learned to recognize</p> <br />
-      <p>In summary, feature extraction with a pre-trained model is like using a very knowledgeable 
-        person's understanding of the world to quickly and effectively analyze new images, leveraging 
-        their expertise to recognize and describe important aspects of those images without having to 
-        start learning from scratch.</p> <br />
+          <h2>How is a Decision Tree Built?</h2> <br />
+          <p>When using scikit-learn to build a decision tree for classification, the algorithm splits the data at each node in a way that maximizes the "purity" of the resulting subsets. Gini impurity is one of the metrics used to measure this purity.</p> <br />
+          <ol>
+            <li><strong>Initialize the Root Node:</strong> The process starts with the entire dataset at the root node.</li>
+            <li><strong>Calculate Gini Impurity:</strong> For each possible split, calculate the Gini impurity of the subsets resulting from the split.</li> <br />
+            <img style={{width: '100%'}} src={Img3} alt="image3" /> <br /> <br />
+            <li><strong>Evaluate Splits:</strong> Divide the dataset based on each feature and split value, calculating the weighted Gini impurity.</li>
+            <li><strong>Choose the Best Split:</strong> The algorithm selects the split that results in the lowest weighted Gini impurity and uses this as the decision rule at the current node.</li>
+            <li><strong>Repeat for Child Nodes:</strong> Continue recursively until a stopping criterion is met (maximum depth, minimum samples, node purity).</li>
+            <li><strong>Final Tree Structure:</strong> The result is a tree structure where each internal node represents a decision based on a feature and a split value, and each leaf node represents a class label (for classification tasks).</li> <br />
+            <img style={{width: '100%'}} src={Img4} alt="image4" /> <br /> <br />
+            <img style={{width: '100%'}} src={Img5} alt="image5" /> <br /> <br />
+            <img style={{width: '100%'}} src={Img6} alt="image6" /> <br /> <br />
+          </ol> <br />
 
-      <p><strong onClick={() => handleHeadingClick("LoadData")}>2. </strong></p>
-      <p>We load our training and test datasets from CSV files using Pandas. The training data is 
-      stored in a variable called <b><i>train</i></b>, and the test data is stored in <b><i>test</i></b>.</p> <br />
+          <h2>What is Pruning?</h2> <br />
+          <p>Pruning in the context of decision trees refers to the process of reducing the size of the tree by removing specific parts of it. This technique aims to improve the tree's ability to generalize to new, unseen data while avoiding overfitting to the training data.</p> <br />
+          <p>Pruning is necessary to prevent overfitting, where decision trees become overly complex and memorize noise or specifics of the training data, leading to poor performance on new data.
+          We essentially prune by removing the nodes which have the least amount of information gain.
+          </p> <br />
+          <img style={{width: '100%'}} src={Img7} alt="image7" /> <br /> <br />
+          <img style={{width: '100%'}} src={Img8} alt="image8" /> <br /> <br />
 
-      <p><strong onClick={() => handleHeadingClick("explore")}>3. Explore Data</strong></p>
-      <p>To understand the structure and content of our data, we display the first 5 rows of the training 
-      dataset.</p> <br />
-
-      <p><strong onClick={() => handleHeadingClick("labels")}>4. Define Class Labels</strong></p>
-      <p>We define the class labels for the clothing items in our dataset. These labels represent the 
-      categories we aim to classify.</p> <br />
-
-      <p><strong onClick={() => handleHeadingClick("preprocess")}>5. Preprocess Data</strong></p>
-      <p>The data needs to be reshaped and normalized to be suitable for training our CNN model. 
-      Normalization ensures that all pixel values are between 0 and 1.</p> <br />
-
-      <p><strong onClick={() => handleHeadingClick("SplitData")}>6. : Split Data into Training and Validation Sets</strong></p>
-      <p>We split the training data into training and validation sets to evaluate the model's 
-      performance during training.</p> < br/>
-
-      <p><strong onClick={() => handleHeadingClick("DeepLearningModel")}>7. Build CNN Model:</strong></p>
-      <p>We construct a Convolutional Neural Network (CNN) using Keras. The model consists of 
-      several layers, including convolutional layers, pooling layers, and dense layers.</p> < br/>
-      <p> <b>Convolutional Neural Networks (CNNs):</b> CNNs are specialized neural networks 
-      for processing data with a grid-like topology, such as images. They automatically 
-      and adaptively learn spatial hierarchies of features through backpropagation</p> <br />
-
-      <p style={{marginLeft: '25px'}}><b>Convolutional layers:</b></p>
-      <p style={{marginLeft: '25px'}}> The core building block of a CNN is the convolutional 
-      layer. It applies filters to small regions of the input data, known as receptive fields. 
-      Each filter is a small matrix of weights that slides across the input data, performing a 
-      dot product with the input pixels. This process is known as convolution.</p> <br />
-      
-      <p>The output of the convolutional layer is a feature map, which is a two-dimensional 
-        representation of the input data. This feature map captures the presence of specific 
-        features in the input data, such as edges or lines</p> <br />
-
-      <p style={{marginLeft: '25px'}}><b>Pooling layers:</b></p>
-      <p style={{marginLeft: '25px'}}> A pooling layer in a neural network helps simplify 
-        and reduce the size of the data from the convolutional layer. By doing this, 
-        it decreases the number of details the network needs to handle, which makes the 
-        network faster and more efficient.</p> <br />
-      
-
-      <p style={{marginLeft: '25px'}}><b>Activation and Classification Layers:</b></p>
-      <p style={{marginLeft: '25px'}}> The output of the pooling layer is fed into an activation function, such as the Rectified Linear Unit (ReLU), which helps the network learn more complex features.</p> <br />
-      <p style={{marginLeft: '25px'}}>The final layer of the CNN is typically a fully connected layer that outputs a probability distribution over all classes, allowing the network to classify the input data.</p> <br />
-
-      <p><strong onClick={() => handleHeadingClick("TrainModel")}>8. Train Model:</strong></p> <br />
-      <ul>
-        <li> Feed the training images and their labels into the CNN.</li>
-        <li> The CNN learns to recognize patterns and features in the images through a process called backpropagation.</li>
-        <li> During training, the model's weights are adjusted to minimize the difference between its predictions and the true labels.</li>
-      </ul> <br />
-      
-      <p><strong onClick={() => handleHeadingClick("TestModel")}>9. Test Model</strong></p> <br />
-      <ul>
-        <li> Feed the test images into the trained CNN model. </li>
-        <li> Compare the model's predictions to the true labels to calculate metrics like accuracy, precision, and recall</li>
-      </ul> <br />
-
-      <p><strong onClick={() => handleHeadingClick("Evaluate")}>10. Evaluate the Model:</strong></p>
-      <p>After training, we evaluate the model on the validation set to see how well it performs.</p> < br/>
-
-      <p><strong onClick={() => handleHeadingClick("SaveModel")}>7. Save and Load the Model:</strong></p>
-      <p>The code saves the trained model to a file for future use. It can be loaded back into memory later to make predictions on new data.</p> <br />
+          <h3>Types of Pruning:</h3> <br />
+          <ul>
+            <li><strong>Cost Complexity Pruning (ccp): </strong> Pruning in the context of decision trees refers to the process of reducing the size of the tree by removing specific parts of it. <br /> <br /> This technique aims to improve the tree's ability to generalize to new, unseen data while avoiding overfitting to the training data.
+            Cost Complexity Pruning (ccp) balances tree complexity and training accuracy. Higher ccp_alpha values (𝛼) lead to more aggressive pruning, resulting in simpler trees with fewer nodes.</li> <br />
+            <img style={{width: '100%'}} src={Img11} alt="image11" /> <br /> <br />
+            <img style={{width: '100%'}} src={Img12} alt="image12" /> <br /> <br />
+            <img style={{width: '100%'}} src={Img13} alt="image13" /> <br /> <br />
+            <li><strong>Pre-pruning:</strong> This involves setting stopping criteria before the tree is fully grown. It stops splitting nodes when further splitting does not lead to an improvement in model accuracy or when certain conditions are met.</li> <br />
+            <img style={{width: '100%'}} src={Img14} alt="image14" /> <br /> <br />
+            <li><strong>Post-Pruning (Reduced Error Pruning):</strong> This technique involves growing the decision tree to its maximum size (fully grown) and then pruning back the nodes that do not provide significant improvements to the model's accuracy or validation performance.</li> <br />
+            <img style={{width: '100%'}} src={Img15} alt="image15" /> <br /> <br />
+          </ul>
       </div>
-
         <div className="box4">
           <div className="code-container">
             <pre className="code-snippet">
@@ -409,7 +391,7 @@ const Lab2 = () => {
       </div>
       <div> 
           <button className="button">
-          <a href="https://www.kaggle.com/code/priyansh2904/lab-5?scriptVersionId=182441640" target="_blank"> View Runable code</a>
+          <a href="https://www.kaggle.com/code/percival224/unit-3-lab-4/notebook" target="_blank"> View Runable code</a>
           </button>
         </div>
       </div>

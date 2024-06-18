@@ -5,129 +5,112 @@ import 'highlight.js/styles/github.css';
 import 'ace-builds/webpack-resolver'; 
 import Img1 from './imgs/image1.png';
 import Img2 from './imgs/image2.png';
+import Img3 from './imgs/image3.png';
+import Img4 from './imgs/image4.png';
 import './lab7.css';
 
 hljs.registerLanguage('python', python);
 
 const codeSnippet2 = `
-# 1. Import Libraries
+# Install libraries if not already installed
+!pip install tensorflow scikit-learn
 
+# Import libraries
 import numpy as np
-import pandas as pd
 import tensorflow as tf
-from tensorflow import keras
+from tensorflow.keras.preprocessing.image import ImageDataGenerator, img_to_array, load_img
+from tensorflow.keras.applications import VGG16
 from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt 
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Dropout
-from sklearn.metrics import classification_report, accuracy_score
-
-# 2. Load Data
-
-train = pd.read_csv("./datasets/fashion-mnist_train.csv")
-test = pd.read_csv("./datasets/fashion-mnist_test.csv")
-
-train.head()
-
-# The catagories of clothing were in dataset
-class_labels= ["T-shirt/top","Trouser","Pullover" ,"Dress","Coat" ,"Sandal" ,"Shirt" ,"Sneaker" ,"Bag" ,"Ankle boot"]
-
-test.head()
-
-# store data as an array 
-train_data = np.array(train, dtype= "float32")
-test_data = np.array(test, dtype= "float32")
-
-x_train = train_data[:, 1:]
-y_train = train_data[:, 0]
-
-x_test = test_data[:, 1:]
-y_test = test_data[:, 0]
-
-# arrange pixel values between 0 to 1 
-x_train = x_train/255
-x_test = x_test/255
-
-# 3. Split Data
-
-x_train , x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.2)
-
-x_train = x_train.reshape(x_train.shape[0], 28, 28, 1)
-x_test = x_test.reshape(x_test.shape[0], 28, 28, 1)
-x_val = x_val.reshape(x_val.shape[0], 28, 28, 1)
-
-plt.imshow(x_train[1])
-print(y_train[1])
-
-# 4. Build a Deep Learning Model and Train the Model
-
-model = Sequential([
-    Conv2D(filters=32, kernel_size=3, strides=(1,1), padding='valid', activation='relu', input_shape=(28, 28, 1)),
-    MaxPooling2D(pool_size=(2,2)),
-    Conv2D(filters=64, kernel_size=3, strides=(2,2), padding='same', activation='relu'),
-    MaxPooling2D(pool_size=(2,2)),
-    Flatten(),
-    Dense(128, activation='relu'),
-    Dropout(0.25),
-    Dense(256, activation='relu'),
-    Dropout(0.25),
-    Dense(128, activation='relu'),
-    Dense(10, activation='softmax')  
-])
-
-model.compile(optimizer='adam', 
-                loss=tf.keras.losses.SparseCategoricalCrossentropy(),  # Use SparseCategoricalCrossentropy for multi-class classification
-                metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
-
-
-model.fit(x_train, y_train, epochs=20, batch_size=16, verbose=1, validation_data=(x_val, y_val))
-
-# 5. Test Model
-
-y_pred = model.predict(x_test)
-
-model.evaluate(x_test, y_test)
-
-# Plot the training and validation accuracy and loss
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.cluster import KMeans
+from sklearn.metrics import classification_report
 import matplotlib.pyplot as plt
 
-plt.figure(figsize= (16,30))
-j=1
+# Define the path to your dataset
+dataset_path = '/kaggle/input/real-life-industrial-dataset-of-casting-product'
 
-for i in np.random.randint(0, 1000,60):
-    plt.subplot(10,6, j)
-    j+=1
-    plt.imshow(x_test[i].reshape(28,28), cmap='Greys')
-    plt.title('Actual = {} / {} \nPredicted = {} / {}'.format(class_labels[int(y_test[i])], int(y_test[i]), class_labels[np.argmax(y_pred[i])], np.argmax(y_pred[i])))
-    plt.axis('off')
+# Load dataset (assuming data is organized in directories by class)
+datagen = ImageDataGenerator(rescale=1./255)
+dataset = datagen.flow_from_directory(dataset_path, target_size=(224, 224), batch_size=32, class_mode='binary')
 
+# Function to load and prepare the data
+def load_data(dataset):
+    features = []
+    labels = []
+    for batch in dataset:
+        X_batch, y_batch = batch
+        features.extend(X_batch)
+        labels.extend(y_batch)
+        if len(features) >= dataset.samples:
+            break
+    return np.array(features), np.array(labels)
 
-# 6. Evaluate 
+X, y = load_data(dataset)
 
-# Convert one-hot encoded labels to class indices if needed
-if y_test.ndim == 2 and y_test.shape[1] > 1:
-    y_test_indices = np.argmax(y_test, axis=1)
-else:
-    y_test_indices = y_test  # If y_test is already in integer form
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Convert y_pred to class indices
-y_pred_indices = np.argmax(y_pred, axis=1)
+# Normalize and reshape the features
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train.reshape(-1, 224 * 224 * 3))
+X_test = scaler.transform(X_test.reshape(-1, 224 * 224 * 3))
 
-# Generate the classification report
-cr = classification_report(y_test_indices, y_pred_indices, target_names=class_labels)
-print(cr)
+# Load pre-trained VGG16 model for feature extraction
+base_model = VGG16(include_top=False, weights='imagenet', input_shape=(224, 224, 3))
+model = tf.keras.Model(inputs=base_model.input, outputs=base_model.get_layer('block5_pool').output)
 
-# Calculate and print the overall accuracy
-accuracy = accuracy_score(y_test_indices, y_pred_indices)
-print(f"Overall Accuracy: {accuracy}")
+# Function to extract features
+def extract_features(model, data):
+    features = model.predict(data)
+    return features.reshape(features.shape[0], -1)
 
-# 7. Save Model
+X_train_features = extract_features(model, X_train.reshape(-1, 224, 224, 3))
+X_test_features = extract_features(model, X_test.reshape(-1, 224, 224, 3))
 
-model.save('fashion_mnist_cnn_model.h5')
+# Compute cosine similarity between test samples and train samples
+cos_sim = cosine_similarity(X_test_features, X_train_features)
+predicted_labels_cos_sim = y_train[np.argmax(cos_sim, axis=1)]
 
-#Load Model
+# Evaluate the cosine similarity classification
+print("Cosine Similarity Classification Report")
+print(classification_report(y_test, predicted_labels_cos_sim))
 
-fashion_model = tf.keras.models.load_model('fashion_mnist_cnn_model.h5')
+# Function to preprocess the given image path
+def preprocess_image(image_path):
+    print(f"Preprocessing image: {image_path}")
+    img = load_img(image_path, target_size=(224, 224))
+    img_array = img_to_array(img) / 255.0
+    img_array = np.expand_dims(img_array, axis=0)
+    return img_array
+
+# Function to extract features of the given image
+def extract_image_features(model, img_array):
+    print("Extracting image features")
+    features = model.predict(img_array)
+    return features.reshape(1, -1)
+
+# Function to classify the given image
+def classify_image(image_path, model, X_train_features, y_train):
+    img_array = preprocess_image(image_path)
+    img_features = extract_image_features(model, img_array)
+    cos_sim = cosine_similarity(img_features, X_train_features)
+    predicted_label = y_train[np.argmax(cos_sim, axis=1)]
+    return predicted_label[0]
+
+# Provide the path to the image you want to classify
+image_path = '/kaggle/input/testimage1/cast_def_0_138.jpeg'
+
+# Classify the given image
+predicted_quality = classify_image(image_path, model, X_train_features, y_train)
+print(f"The predicted quality for the image is: {'High' if predicted_quality == 1 else 'Low'}")
+
+# Display the given image
+img = load_img(image_path)
+plt.imshow(img)
+plt.axis('off')
+plt.show()
 `;
 
 const codeSections = {
@@ -136,93 +119,72 @@ const codeSections = {
 
 
 !pip install tensorflow scikit-learn
-
-
-# Import libraries import numpy as np import tensorflow as tf
+`,
+  ImportLibs: `
+import numpy as np
+import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator, img_to_array, load_img
- 
-from tensorflow.keras.applications import VGG16 from sklearn.model_selection import train_test_split from sklearn.preprocessing import StandardScaler from sklearn.metrics.pairwise import cosine_similarity from sklearn.neighbors import KNeighborsClassifier from sklearn.cluster import KMeans
-from sklearn.metrics import classification_report import matplotlib.pyplot as plt
-
-# Define the path to your dataset
-dataset_path = '/kaggle/input/real-life-industrial-dataset-of-casting-product'
-
-
-# Load dataset (assuming data is organized in directories by class) datagen = ImageDataGenerator(rescale=1./255)
-dataset = datagen.flow_from_directory(dataset_path, target_size=(224, 224), batch_size=32, class_mode='binary')
-
-
-# Function to load and prepare the data def load_data(dataset):
-features = [] labels = []
-for batch in dataset:
-X_batch, y_batch = batch features.extend(X_batch) labels.extend(y_batch)
-if len(features) >= dataset.samples: break
-return np.array(features), np.array(labels)
-
-
-X, y = load_data(dataset)
- 
-# Split data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42) # Normalize and reshape the features
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train.reshape(-1, 224 * 224 * 3))
-X_test = scaler.transform(X_test.reshape(-1, 224 * 224 * 3))
-
-
-# Load pre-trained VGG16 model for feature extraction
-base_model = VGG16(include_top=False, weights='imagenet', input_shape=(224, 224, 3))
-model = tf.keras.Model(inputs=base_model.input, outputs=base_model.get_layer('block5_pool').output)
-
-
-# Function to extract features
-def extract_features(model, data): features = model.predict(data)
-return features.reshape(features.shape[0], -1)
-
-
-X_train_features = extract_features(model, X_train.reshape(-1, 224, 224, 3))
-X_test_features = extract_features(model, X_test.reshape(-1, 224, 224, 3))
-
-`,
-  SplitData: `
+from tensorflow.keras.applications import VGG16
 from sklearn.model_selection import train_test_split
-
-x_train , x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.2)
-
-x_train = x_train.reshape(x_train.shape[0], 28, 28, 1)
-x_test = x_test.reshape(x_test.shape[0], 28, 28, 1)
-x_val = x_val.reshape(x_val.shape[0], 28, 28, 1)
-
-import matplotlib.pyplot as plt 
-
-plt.imshow(x_train[1])
-print(y_train[1])
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.cluster import KMeans
+from sklearn.metrics import classification_report
+import matplotlib.pyplot as plt
 `,
-  DeepLearningModel: `
-  from tensorflow.keras.models import Sequential
-  from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Dropout
-
-model = Sequential([
-    Conv2D(filters=32, kernel_size=3, strides=(1,1), padding='valid', activation='relu', input_shape=(28, 28, 1)),
-    MaxPooling2D(pool_size=(2,2)),
-    Conv2D(filters=64, kernel_size=3, strides=(2,2), padding='same', activation='relu'),
-    MaxPooling2D(pool_size=(2,2)),
-    Flatten(),
-    Dense(128, activation='relu'),
-    Dropout(0.25),
-    Dense(256, activation='relu'),
-    Dropout(0.25),
-    Dense(128, activation='relu'),
-    Dense(10, activation='softmax')  
-])
-
-model.compile(optimizer='adam', 
-                loss=tf.keras.losses.SparseCategoricalCrossentropy(),  # Use SparseCategoricalCrossentropy for multi-class classification
-                metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
+  DefinePath: `
+  dataset_path = '/kaggle/input/real-life-industrial-dataset-of-casting-product'
 `,
 
-  TrainModel: `
-  model.fit(x_train, y_train, epochs=20, batch_size=16, verbose=1, validation_data=(x_val, y_val))
+  LoadDataset: `
+  datagen = ImageDataGenerator(rescale=1./255)
+  dataset = datagen.flow_from_directory(dataset_path, target_size=(224, 224), batch_size=32, class_mode='binary')
+  `,
+  LoadPrepData: `
+  X, y = load_data(dataset)
+  `,
+  SplitData: `
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+  `,
+  NormaliseReshape: `
+  scaler = StandardScaler()
+  X_train = scaler.fit_transform(X_train.reshape(-1, 224 * 224 * 3))
+  X_test = scaler.transform(X_test.reshape(-1, 224 * 224 * 3))
+  `,
+  LoadVGG16: `
+  base_model = VGG16(include_top=False, weights='imagenet', input_shape=(224, 224, 3))
+  model = tf.keras.Model(inputs=base_model.input, outputs=base_model.get_layer('block5_pool').output)
+  `,
+  ExtractFeatures:`
+  X_train_features = extract_features(model, X_train.reshape(-1, 224, 224, 3))
+  X_test_features = extract_features(model, X_test.reshape(-1, 224, 224, 3))
+  `,
+  ComputeCosSim: `
+  cos_sim = cosine_similarity(X_test_features, X_train_features)
+  predicted_labels_cos_sim = y_train[np.argmax(cos_sim, axis=1)]
+  `,
+  EvaluateClass: `
+  print("Cosine Similarity Classification Report")
+  print(classification_report(y_test, predicted_labels_cos_sim))
+  `,
+  PreprocessingImage: `
+  def preprocess_image(image_path):
+    print(f"Preprocessing image: {image_path}")
+    img = load_img(image_path, target_size=(224, 224))
+    img_array = img_to_array(img) / 255.0
+    img_array = np.expand_dims(img_array, axis=0)
+    return img_array
 
+  def extract_image_features(model, img_array):
+      print("Extracting image features")
+      features = model.predict(img_array)
+      return features.reshape(1, -1)
+  `,
+  ClassifyImage: `
+  image_path = '/kaggle/input/testimage1/cast_def_0_138.jpeg'
+  predicted_quality = classify_image(image_path, model, X_train_features, y_train)
+  print(f"The predicted quality for the image is: {'High' if predicted_quality == 1 else 'Low'}")
   `
 };
 
@@ -319,86 +281,56 @@ const Lab2 = () => {
       <ParticleCanvas />
       <div className="Layout" style={{ display: "flex", justifyContent: "space-around", color: '#09F' }}>
       <div className="box3">
-      <h2>CNN Model for Image Classification Explained</h2>
+        <h2>Image Classification Using Pre-trained VGG16 and Cosine Similarity</h2> <br />
 
-      <p><strong onClick={() => handleHeadingClick("Step1")}>1. FEATURE EXTRACTION USING A PRE-TRAINED VGG16 and SPLITTING INTO TESTING AND TRAINING</strong></p> <br />
-      <p>Feature extraction using a pre-trained model involves using a neural network that has already 
-        been trained on a large dataset (like ImageNet) to identify and extract important characteristics
-        from new images. These characteristics, or features, can be patterns such as edges, textures, 
-        shapes, and more complex structures that the model has learned to recognize</p> <br />
-      <p>In summary, feature extraction with a pre-trained model is like using a very knowledgeable 
-        person's understanding of the world to quickly and effectively analyze new images, leveraging 
-        their expertise to recognize and describe important aspects of those images without having to 
-        start learning from scratch.</p> <br />
-      <img style={{width: '100%'}} src={Img1} alt="image1" /> <br /> <br />
-      <img style={{width: '100%'}} src={Img2} alt="image2" /> <br /> <br />
+        <p><strong onClick={() => handleHeadingClick("Step1")}>1. Installing Libraries</strong></p>
+        <p>The code starts by ensuring that all the necessary libraries, such as TensorFlow and scikit-learn, are installed to enable machine learning functionalities.</p> <br />
 
-      <p><strong onClick={() => handleHeadingClick("LoadData")}>2. </strong></p>
-      <p>We load our training and test datasets from CSV files using Pandas. The training data is 
-      stored in a variable called <b><i>train</i></b>, and the test data is stored in <b><i>test</i></b>.</p> <br />
+        <p><strong onClick={() => handleHeadingClick("ImportLibs")}>2. Importing Libraries</strong></p>
+        <p>Essential libraries like NumPy for handling data, TensorFlow for machine learning, and various scikit-learn modules for preprocessing and model evaluation are imported.</p> <br />
 
-      <p><strong onClick={() => handleHeadingClick("explore")}>3. Explore Data</strong></p>
-      <p>To understand the structure and content of our data, we display the first 5 rows of the training 
-      dataset.</p> <br />
+        <p><strong onClick={() => handleHeadingClick("DefinePath")}>3. Defining Dataset Path</strong></p>
+        <p>The path where the dataset is stored is defined, guiding the code to locate and process the dataset correctly.</p> <br />
 
-      <p><strong onClick={() => handleHeadingClick("labels")}>4. Define Class Labels</strong></p>
-      <p>We define the class labels for the clothing items in our dataset. These labels represent the 
-      categories we aim to classify.</p> <br />
+        <p><strong onClick={() => handleHeadingClick("LoadDataset")}>4. Loading Dataset</strong></p>
+        <p>The dataset is loaded and prepared using TensorFlow's ImageDataGenerator, which also handles the image resizing and normalization.</p> <br />
 
-      <p><strong onClick={() => handleHeadingClick("preprocess")}>5. Preprocess Data</strong></p>
-      <p>The data needs to be reshaped and normalized to be suitable for training our CNN model. 
-      Normalization ensures that all pixel values are between 0 and 1.</p> <br />
+        <p><strong onClick={() => handleHeadingClick("LoadPrepData")}>5. Loading and Preparing Data</strong></p>
+        <p>A function is set up to load the data, extract images and labels, and ensure that all the data needed for training and testing is ready and accessible.</p> <br />
 
-      <p><strong onClick={() => handleHeadingClick("SplitData")}>6. : Split Data into Training and Validation Sets</strong></p>
-      <p>We split the training data into training and validation sets to evaluate the model's 
-      performance during training.</p> < br/>
+        <p><strong onClick={() => handleHeadingClick("SplitData")}>6. Splitting Data into Training and Testing Sets</strong></p>
+        <p>The data is divided into training and testing sets to provide a robust evaluation of the model's performance, maintaining an unbiased approach towards model validation.</p> <br />
 
-      <p><strong onClick={() => handleHeadingClick("DeepLearningModel")}>7. Build CNN Model:</strong></p>
-      <p>We construct a Convolutional Neural Network (CNN) using Keras. The model consists of 
-      several layers, including convolutional layers, pooling layers, and dense layers.</p> < br/>
-      <p> <b>Convolutional Neural Networks (CNNs):</b> CNNs are specialized neural networks 
-      for processing data with a grid-like topology, such as images. They automatically 
-      and adaptively learn spatial hierarchies of features through backpropagation</p> <br />
+        <p><strong onClick={() => handleHeadingClick("NormalizeReshape")}>7. Normalizing and Reshaping Features</strong></p>
+        <p>Data normalization and reshaping are critical for preparing the data to fit the input requirements of the pre-trained VGG16 model, ensuring that each input is treated equally during model training.</p> <br />
 
-      <p style={{marginLeft: '25px'}}><b>Convolutional layers:</b></p>
-      <p style={{marginLeft: '25px'}}> The core building block of a CNN is the convolutional 
-      layer. It applies filters to small regions of the input data, known as receptive fields. 
-      Each filter is a small matrix of weights that slides across the input data, performing a 
-      dot product with the input pixels. This process is known as convolution.</p> <br />
-      
-      <p>The output of the convolutional layer is a feature map, which is a two-dimensional 
-        representation of the input data. This feature map captures the presence of specific 
-        features in the input data, such as edges or lines</p> <br />
+        <p><strong onClick={() => handleHeadingClick("LoadVGG16")}>8. Loading Pre-trained VGG16 Model</strong></p>
+        <p>The pre-trained VGG16 model is loaded, set to extract deep features from the images. This model, trained on extensive datasets like ImageNet, provides a rich feature extraction capability.</p> <br />
 
-      <p style={{marginLeft: '25px'}}><b>Pooling layers:</b></p>
-      <p style={{marginLeft: '25px'}}> A pooling layer in a neural network helps simplify 
-        and reduce the size of the data from the convolutional layer. By doing this, 
-        it decreases the number of details the network needs to handle, which makes the 
-        network faster and more efficient.</p> <br />
-      
+        <p><strong onClick={() => handleHeadingClick("ExtractFeatures")}>9. Extracting Features</strong></p>
+        <p>A function is defined to pass images through the VGG16 model and extract significant features necessary for classifying the images effectively using machine learning techniques.</p> <br />
 
-      <p style={{marginLeft: '25px'}}><b>Activation and Classification Layers:</b></p>
-      <p style={{marginLeft: '25px'}}> The output of the pooling layer is fed into an activation function, such as the Rectified Linear Unit (ReLU), which helps the network learn more complex features.</p> <br />
-      <p style={{marginLeft: '25px'}}>The final layer of the CNN is typically a fully connected layer that outputs a probability distribution over all classes, allowing the network to classify the input data.</p> <br />
+        <p><strong onClick={() => handleHeadingClick("ComputeCosSim")}>10. Computing Cosine Similarity</strong></p>
+        <p>Cosine similarity measures are computed between features of the training set and the test set to determine how similar the images are, aiding in the classification process based on the most similar training examples.</p> <br />
 
-      <p><strong onClick={() => handleHeadingClick("TrainModel")}>8. Train Model:</strong></p> <br />
-      <ul>
-        <li> Feed the training images and their labels into the CNN.</li>
-        <li> The CNN learns to recognize patterns and features in the images through a process called backpropagation.</li>
-        <li> During training, the model's weights are adjusted to minimize the difference between its predictions and the true labels.</li>
-      </ul> <br />
-      
-      <p><strong onClick={() => handleHeadingClick("TestModel")}>9. Test Model</strong></p> <br />
-      <ul>
-        <li> Feed the test images into the trained CNN model. </li>
-        <li> Compare the model's predictions to the true labels to calculate metrics like accuracy, precision, and recall</li>
-      </ul> <br />
+        <p><strong onClick={() => handleHeadingClick("EvaluateClass")}>11. Evaluating Cosine Similarity Classification</strong></p>
+        <p>The effectiveness of using cosine similarity for classification is evaluated, providing insights into the accuracy of this method in categorizing images based on learned patterns and similarities.</p> <br />
 
-      <p><strong onClick={() => handleHeadingClick("Evaluate")}>10. Evaluate the Model:</strong></p>
-      <p>After training, we evaluate the model on the validation set to see how well it performs.</p> < br/>
+        <p><strong onClick={() => handleHeadingClick("PreprocessImage")}>12. Preprocessing and Classifying New Images</strong></p>
+        <p>Functions are prepared to preprocess new images, extract their features using the pre-trained model, and classify them by comparing these features to those of the images in the training set through cosine similarity.</p> <br />
 
-      <p><strong onClick={() => handleHeadingClick("SaveModel")}>7. Save and Load the Model:</strong></p>
-      <p>The code saves the trained model to a file for future use. It can be loaded back into memory later to make predictions on new data.</p> <br />
+        <p><strong onClick={() => handleHeadingClick("ClassifyImage")}>13. Displaying Classification Results</strong></p>
+        <p>The classification results are displayed, showing the predicted labels for new images, which helps in understanding the model's performance and its practical application in real-world scenarios.</p> <br />
+
+        <p>The Key aspects of this code are:-</p>
+        <ul>
+          <li><b>Feature Extraction:</b> Feature extraction involves identifying and extracting important characteristics or patterns from industrial equipment images.  In the context of image classification, these features can include edges, textures, shapes, and more complex structures.</li> <br />
+          <img style={{width: '100%'}} src={Img1} alt="image1" /> <br /> <br />
+          <img style={{width: '100%'}} src={Img2} alt="image2" /> <br /> <br />
+          <li><b>Cosine Similarity: </b> Cosine similarity measures the similarity between two vectors by comparing the angle between them. It is often used for image classification by comparing the feature vectors of images to determine how similar they are.</li>
+          <img style={{width: '100%'}} src={Img3} alt="image3" /> <br /> <br />
+          <img style={{width: '100%'}} src={Img4} alt="image4" /> <br /> <br />
+        </ul>
       </div>
 
         <div className="box4">
@@ -413,7 +345,7 @@ const Lab2 = () => {
       </div>
       <div> 
           <button className="button">
-          <a href="https://www.kaggle.com/code/priyansh2904/lab-5?scriptVersionId=182441640" target="_blank"> View Runable code</a>
+          <a href="https://www.kaggle.com/code/pushkarns/unit-3-lab-1-final" target="_blank"> View Runable code</a>
           </button>
         </div>
       </div>
