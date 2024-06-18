@@ -78,100 +78,120 @@ print("Video capture released and windows destroyed. Exiting program.")
 `;
 
 const codeSections = {
-  Step1: `
-# Install libraries if not already installed
+  Section1: `
+# Import Libraries
+import cv2
+import numpy as np
+import datetime
+import csv
+from sklearn.ensemble import IsolationForest
+import joblib
+import os
 
-
-!pip install tensorflow scikit-learn
-
-
-# Import libraries import numpy as np import tensorflow as tf
-from tensorflow.keras.preprocessing.image import ImageDataGenerator, img_to_array, load_img
- 
-from tensorflow.keras.applications import VGG16 from sklearn.model_selection import train_test_split from sklearn.preprocessing import StandardScaler from sklearn.metrics.pairwise import cosine_similarity from sklearn.neighbors import KNeighborsClassifier from sklearn.cluster import KMeans
-from sklearn.metrics import classification_report import matplotlib.pyplot as plt
-
-# Define the path to your dataset
-dataset_path = '/kaggle/input/real-life-industrial-dataset-of-casting-product'
-
-
-# Load dataset (assuming data is organized in directories by class) datagen = ImageDataGenerator(rescale=1./255)
-dataset = datagen.flow_from_directory(dataset_path, target_size=(224, 224), batch_size=32, class_mode='binary')
-
-
-# Function to load and prepare the data def load_data(dataset):
-features = [] labels = []
-for batch in dataset:
-X_batch, y_batch = batch features.extend(X_batch) labels.extend(y_batch)
-if len(features) >= dataset.samples: break
-return np.array(features), np.array(labels)
-
-
-X, y = load_data(dataset)
- 
-# Split data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42) # Normalize and reshape the features
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train.reshape(-1, 224 * 224 * 3))
-X_test = scaler.transform(X_test.reshape(-1, 224 * 224 * 3))
-
-
-# Load pre-trained VGG16 model for feature extraction
-base_model = VGG16(include_top=False, weights='imagenet', input_shape=(224, 224, 3))
-model = tf.keras.Model(inputs=base_model.input, outputs=base_model.get_layer('block5_pool').output)
-
-
-# Function to extract features
-def extract_features(model, data): features = model.predict(data)
-return features.reshape(features.shape[0], -1)
-
-
-X_train_features = extract_features(model, X_train.reshape(-1, 224, 224, 3))
-X_test_features = extract_features(model, X_test.reshape(-1, 224, 224, 3))
-
-`,
-  SplitData: `
-from sklearn.model_selection import train_test_split
-
-x_train , x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.2)
-
-x_train = x_train.reshape(x_train.shape[0], 28, 28, 1)
-x_test = x_test.reshape(x_test.shape[0], 28, 28, 1)
-x_val = x_val.reshape(x_val.shape[0], 28, 28, 1)
-
-import matplotlib.pyplot as plt 
-
-plt.imshow(x_train[1])
-print(y_train[1])
-`,
-  DeepLearningModel: `
-  from tensorflow.keras.models import Sequential
-  from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Dropout
-
-model = Sequential([
-    Conv2D(filters=32, kernel_size=3, strides=(1,1), padding='valid', activation='relu', input_shape=(28, 28, 1)),
-    MaxPooling2D(pool_size=(2,2)),
-    Conv2D(filters=64, kernel_size=3, strides=(2,2), padding='same', activation='relu'),
-    MaxPooling2D(pool_size=(2,2)),
-    Flatten(),
-    Dense(128, activation='relu'),
-    Dropout(0.25),
-    Dense(256, activation='relu'),
-    Dropout(0.25),
-    Dense(128, activation='relu'),
-    Dense(10, activation='softmax')  
-])
-
-model.compile(optimizer='adam', 
-                loss=tf.keras.losses.SparseCategoricalCrossentropy(),  # Use SparseCategoricalCrossentropy for multi-class classification
-                metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
+# Initialize video capture
+cap = cv2.VideoCapture(0)
 `,
 
-  TrainModel: `
-  model.fit(x_train, y_train, epochs=20, batch_size=16, verbose=1, validation_data=(x_val, y_val))
+  Section2: `
+# Create directory to save anomaly frames
+if not os.path.exists('anomalies'):
+    os.makedirs('anomalies')
 
-  `
+# Open CSV file for writing anomaly log
+anomaly_log_file = open('anomaly_log.csv', 'w', newline='')
+anomaly_log_writer = csv.writer(anomaly_log_file)
+anomaly_log_writer.writerow(["Timestamp", "ImageFile"])
+
+# Open CSV file for writing data log
+data_log_file = open('data_log.csv', 'w', newline='')
+data_log_writer = csv.writer(data_log_file)
+data_log_writer.writerow(["Timestamp", "Motion"])
+`,
+
+  Section3: `
+# Read initial frames
+ret, frame1 = cap.read()
+ret, frame2 = cap.read()
+data_log = []
+
+# Flag to check if model is ready for anomaly detection
+model_ready = False
+`,
+
+  Section4: `
+while cap.isOpened():
+    # Motion detection
+    diff = cv2.absdiff(frame1, frame2)
+    gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(gray, (5, 5), 0)
+    _, thresh = cv2.threshold(blur, 20, 255, cv2.THRESH_BINARY)
+    dilated = cv2.dilate(thresh, None, iterations=3)
+    contours, _ = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    motion = 0
+    for contour in contours:
+        if cv2.contourArea(contour) < 900:
+            continue
+        x, y, w, h = cv2.boundingRect(contour)
+        cv2.rectangle(frame1, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        motion += 1
+
+    frame1 = frame2
+    ret, frame2 = cap.read()
+
+    # Save data with timestamp
+    timestamp = datetime.datetime.now()
+    data_log_writer.writerow([timestamp, motion])
+    data_log.append([motion])
+`,
+
+  Section5: `
+    # Initial model training
+    if len(data_log) == 100:
+        model = IsolationForest(contamination=0.01)
+        model.fit(data_log)
+        joblib.dump(model, 'isolation_forest_model.pkl')
+        print("Initial model training complete. Model is now ready to detect anomalies.")
+        print("Select feed window and press q to quit")
+        model_ready = True
+
+    # Periodic model retraining
+    if len(data_log) > 100 and len(data_log) % 50 == 0:  # Retrain every 50 new frames
+        model = IsolationForest(contamination=0.01)
+        model.fit(data_log)
+        joblib.dump(model, 'isolation_forest_model.pkl')
+        print("Model retrained and updated.")
+`,
+
+  Section6: `
+    # Anomaly detection
+    if model_ready:
+        feature_vector = np.array([[motion]])
+        anomaly = model.predict(feature_vector)
+        if anomaly == -1:
+            print(f"Anomaly detected at {timestamp}")
+            # Save the frame to file
+            anomaly_filename = f"anomalies/anomaly_{timestamp.strftime('%Y%m%d_%H%M%S')}.png"
+            cv2.imwrite(anomaly_filename, frame1)
+            # Log anomaly to CSV file
+            anomaly_log_writer.writerow([timestamp, anomaly_filename])
+`,
+
+  Section7: `
+    # Display video
+    cv2.imshow("feed", frame1)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+# Release resources
+cap.release()
+cv2.destroyAllWindows()
+anomaly_log_file.close()
+data_log_file.close()
+print("Video capture released and windows destroyed. Exiting program.")
+`
 };
+
 
 const Lab2 = () => {
   const [highlightedCodeSnippet, setHighlightedCodeSnippet] = useState("");
@@ -267,26 +287,28 @@ const Lab2 = () => {
       <div className="Layout" style={{ display: "flex", justifyContent: "space-around", color: '#09F' }}>
       <div className="box3">
   <h2>Anomaly Detection and Real-Time Monitoring on a Raspberry Pi</h2> <br />
-  <p> <b>Anomaly detection </b>in the context of real-time monitoring involves identifying unusual patterns that do not conform to expected behavior. These deviations from the norm can indicate potential issues or noteworthy events, making anomaly detection a crucial aspect of various applications, including environmental monitoring, security, and predictive maintenance.</p><br/>
 
-  <strong onClick={() => handleHeadingClick("AnomalyDetection")}>Anomaly Detection</strong>
-  <p>Anomalies, also known as outliers, are data points that differ significantly from other observations. Anomaly detection can be broadly categorized into:</p>
-  <ul>
-    <li><strong>1. Supervised Anomaly Detection:</strong> Requires a labeled dataset with normal and abnormal instances.</li>
-    <li><strong>2. Unsupervised Anomaly Detection:</strong> Does not require labeled data, instead identifies anomalies based on their deviation from the majority of data points.</li>
-  </ul>
-  <p>For this lab, we focus on unsupervised anomaly detection using Isolation Forests, implemented on a Raspberry Pi with a camera module for real-time environmental monitoring.</p><br/>
+<strong onClick={() => handleHeadingClick("Section1")}>Section 1: Import Libraries and Initialize Video Capture</strong> <br />
+<p>Import necessary libraries for video processing, anomaly detection, and model handling. Initialize video capture to use the webcam.</p><br/>
 
-  <strong onClick={() => handleHeadingClick("RealTimeMonitoring")}>Real-Time Monitoring by Recursively Training a Model</strong> <br />
-  <p>Real-time monitoring involves continuously collecting data, processing it, and analyzing it to detect anomalies. The system we implement will:</p> <br />
-  <ol style={{marginLeft: '25px'}}>
-    <li><b>Capture data:</b> Use the Raspberry Pi camera module to capture video frames as input data.</li>
-    ib-divider
-    <li><b>Process data:</b> Extract relevant features such as motion intensity from video frames.</li>
-    <li><b>Train the model: </b> Use the captured data to train an Isolation Forest model periodically.</li>
-    <li><b>Detect anomalies:</b> Use the trained model to detect anomalies in real-time.</li>
-    <li><b>Log anomalies:</b> Save anomaly data (timestamp, image) for further analysis.</li>
-  </ol><br/>
+<strong onClick={() => handleHeadingClick("Section2")}>Section 2: Create Directories and Open CSV Files</strong> <br />
+<p>Create a directory to save frames where anomalies are detected. Open CSV files for logging anomalies and motion data.</p><br/>
+
+<strong onClick={() => handleHeadingClick("Section3")}>Section 3: Initialize Frames and Data Log</strong> <br />
+<p>Read the initial frames for motion detection. Initialize the list to store motion data. Set a flag for model readiness.</p><br/>
+
+<strong onClick={() => handleHeadingClick("Section4")}>Section 4: Motion Detection and Data Logging</strong> <br />
+<p>Detect motion between consecutive frames. Convert the difference to grayscale and apply Gaussian blur. Threshold and dilate the image to find contours representing motion. Draw rectangles around detected motion areas and log the motion data.</p><br/>
+
+<strong onClick={() => handleHeadingClick("Section5")}>Section 5: Initial Model Training and Retraining</strong> <br />
+<p>Train the initial Isolation Forest model after collecting 100 data points. Periodically retrain the model with new data every 50 frames.</p><br/>
+
+<strong onClick={() => handleHeadingClick("Section6")}>Section 6: Anomaly Detection and Logging</strong> <br />
+<p>Detect anomalies using the trained model. If an anomaly is detected, save the frame and log the anomaly.</p><br/>
+
+<strong onClick={() => handleHeadingClick("Section7")}>Section 7: Display Video and Clean Up</strong> <br />
+<p>Display the video feed with detected motion. Release video capture and close windows when 'q' is pressed.</p><br/>
+
 
   <strong onClick={() => handleHeadingClick("UnsupervisedLearning")}>Unsupervised Learning and Isolation Forests</strong> <br /> <br />
   <ul>
@@ -304,12 +326,7 @@ const Lab2 = () => {
   <b>Isolation Forests:</b>
   <img style={{width: '100%'}} src={Img2} alt="image2" /> <br /> <br />
   <strong onClick={() => handleHeadingClick("Implementation")}>Implementation on Raspberry Pi</strong>
-  <p>Hardware and Software Setup includes:</p>
-  <ul>
-    <li>Raspberry Pi with a camera module and a USB microphone.</li>
-    <li>Required packages installation commands for Linux on Raspberry Pi.</li>
-  </ul>
-  <p>Python Script for Data Collection and Anomaly Detection involves capturing video frames, detecting motion, training the model periodically, and detecting and logging anomalies.</p>
+  <p>This could also be implemented using a raspberry pi and a camera module instead of your web cam. That can be connected to the internet and be used for real time monitoring of any environment.</p>
 </div>
 
         <div className="box4">
@@ -324,7 +341,7 @@ const Lab2 = () => {
       </div>
       <div> 
           <button className="button">
-          <a href="https://www.kaggle.com/code/priyansh2904/lab-5?scriptVersionId=182441640" target="_blank"> View Runable code</a>
+          <a href="https://www.kaggle.com/code/adityahr700/unit-3-lab-3?scriptVersionId=184231769" target="_blank"> View Runable code</a>
           </button>
         </div>
       </div>
