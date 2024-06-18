@@ -6,6 +6,9 @@ import 'ace-builds/webpack-resolver';
 import Img1 from './imgs/image1.png';
 import Img2 from './imgs/image2.png';
 import Img3 from './imgs/image3.png';
+import Img4 from './imgs/image4.jpg';
+import Img5 from './imgs/image5.jpg';
+import Img6 from './imgs/image6.jpg';
 import './lab9.css';
 
 hljs.registerLanguage('python', python);
@@ -326,7 +329,12 @@ const Lab2 = () => {
   <b>Isolation Forests:</b>
   <img style={{width: '100%'}} src={Img2} alt="image2" /> <br /> <br />
   <strong onClick={() => handleHeadingClick("Implementation")}>Implementation on Raspberry Pi</strong>
-  <p>This could also be implemented using a raspberry pi and a camera module instead of your web cam. That can be connected to the internet and be used for real time monitoring of any environment.</p>
+  <p>This could also be implemented using a raspberry pi and a camera module instead of your web cam. That can be connected to the internet and be used for real time monitoring of any environment.</p><br/>
+
+  <b>Images of output</b>
+  <img style={{width: '100%'}} src={Img4} alt="image4" /> <br /> <br />
+  <img style={{width: '100%'}} src={Img5} alt="image5" /> <br /> <br />
+  <img style={{width: '100%'}} src={Img6} alt="image6" />
 </div>
 
         <div className="box4">
@@ -341,7 +349,7 @@ const Lab2 = () => {
       </div>
       <div> 
           <button className="button">
-          <a href="https://www.kaggle.com/code/adityahr700/unit-3-lab-3?scriptVersionId=184231769" target="_blank"> View Runable code</a>
+          <a href="https://www.kaggle.com/code/adityahr700/unit-3-lab-3?scriptVersionId=184274226" target="_blank"> View Runable code</a>
           </button>
         </div>
       </div>
