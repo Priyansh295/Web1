@@ -591,7 +591,7 @@ const Lab2 = () => {
       </div>
       <div> 
           <button className="button">
-          <a href="https://www.kaggle.com/code/priyansh2904/unit3lab6?scriptVersionId=184180277" target="_blank"> View Runable code</a>
+          <a href="https://www.kaggle.com/code/priyanshsurana/notebook7ea446b9bf?scriptVersionId=184225982" target="_blank"> View Runable code</a>
           </button>
         </div>
       </div>
