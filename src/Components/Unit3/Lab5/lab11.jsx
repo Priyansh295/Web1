@@ -12,124 +12,955 @@ import './lab11.css';
 hljs.registerLanguage('python', python);
 
 const codeSnippet2 = `
-# 1. Import Libraries
-
-import numpy as np
+import librosa
+import IPython.display as ipd
+import librosa.display
+import os
 import pandas as pd
-import tensorflow as tf
-from tensorflow import keras
-from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt 
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Dropout
-from sklearn.metrics import classification_report, accuracy_score
+import numpy as np
 
-# 2. Load Data
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier, VotingClassifier, StackingClassifier
+from sklearn.metrics import roc_auc_score, f1_score, accuracy_score
+from sklearn.feature_selection import VarianceThreshold, SelectKBest, SelectPercentile, f_classif
+from sklearn.decomposition import PCA
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn import svm
+from sklearn.linear_model import LogisticRegression
+from sklearn import preprocessing
 
-train = pd.read_csv("./datasets/fashion-mnist_train.csv")
-test = pd.read_csv("./datasets/fashion-mnist_test.csv")
+import xgboost as xgb
 
-train.head()
-
-# The catagories of clothing were in dataset
-class_labels= ["T-shirt/top","Trouser","Pullover" ,"Dress","Coat" ,"Sandal" ,"Shirt" ,"Sneaker" ,"Bag" ,"Ankle boot"]
-
-test.head()
-
-# store data as an array 
-train_data = np.array(train, dtype= "float32")
-test_data = np.array(test, dtype= "float32")
-
-x_train = train_data[:, 1:]
-y_train = train_data[:, 0]
-
-x_test = test_data[:, 1:]
-y_test = test_data[:, 0]
-
-# arrange pixel values between 0 to 1 
-x_train = x_train/255
-x_test = x_test/255
-
-# 3. Split Data
-
-x_train , x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.2)
-
-x_train = x_train.reshape(x_train.shape[0], 28, 28, 1)
-x_test = x_test.reshape(x_test.shape[0], 28, 28, 1)
-x_val = x_val.reshape(x_val.shape[0], 28, 28, 1)
-
-plt.imshow(x_train[1])
-print(y_train[1])
-
-# 4. Build a Deep Learning Model and Train the Model
-
-model = Sequential([
-    Conv2D(filters=32, kernel_size=3, strides=(1,1), padding='valid', activation='relu', input_shape=(28, 28, 1)),
-    MaxPooling2D(pool_size=(2,2)),
-    Conv2D(filters=64, kernel_size=3, strides=(2,2), padding='same', activation='relu'),
-    MaxPooling2D(pool_size=(2,2)),
-    Flatten(),
-    Dense(128, activation='relu'),
-    Dropout(0.25),
-    Dense(256, activation='relu'),
-    Dropout(0.25),
-    Dense(128, activation='relu'),
-    Dense(10, activation='softmax')  
-])
-
-model.compile(optimizer='adam', 
-                loss=tf.keras.losses.SparseCategoricalCrossentropy(),  # Use SparseCategoricalCrossentropy for multi-class classification
-                metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
-
-
-model.fit(x_train, y_train, epochs=20, batch_size=16, verbose=1, validation_data=(x_val, y_val))
-
-# 5. Test Model
-
-y_pred = model.predict(x_test)
-
-model.evaluate(x_test, y_test)
-
-# Plot the training and validation accuracy and loss
+import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+import matplotlib.gridspec as gridspec
+#%matplotlib notebook
+# %matplotlib inline
 
-plt.figure(figsize= (16,30))
-j=1
+# Enter the data path
+PATH_DATASET = "/kaggle/input/dataset"
 
-for i in np.random.randint(0, 1000,60):
-    plt.subplot(10,6, j)
-    j+=1
-    plt.imshow(x_test[i].reshape(28,28), cmap='Greys')
-    plt.title('Actual = {} / {} \nPredicted = {} / {}'.format(class_labels[int(y_test[i])], int(y_test[i]), class_labels[np.argmax(y_pred[i])], np.argmax(y_pred[i])))
-    plt.axis('off')
+"""Function to create dataframes for all machine types containing the filename of each sample, its section, its attribute and type of sound."""
+
+def build_dataframe(machine_str = 'valve'):
+    #Get list of files in train and test directory
+    path_train_folder = PATH_DATASET + "/dev_" + machine_str + "/" + machine_str + "/train"
+    path_test_folder = PATH_DATASET  + "/dev_" + machine_str + "/" + machine_str + "/test"
+
+    train_files = [f for f in os.listdir(path_train_folder)]
+    test_files = [f for f in os.listdir(path_test_folder) ]
+    #Get list of dictionnary for creating DataFrame
+    list_dict_file = []
+
+    #Loop through filenames
+    for filename in train_files:
+
+        #Get filename as list of string
+        splitted_filename = filename.split('_')
+
+        #Append dictionnary to list
+        list_dict_file.append({
+            'filepath' : path_train_folder + "/" + filename,
+            'filename' : filename,
+            # Handle non-integer values in 'section' column
+            'section' : splitted_filename[1] if splitted_filename[1].isdigit() else None,
+            'domain_env' : splitted_filename[2],
+            'dir' : splitted_filename[3],
+            'sound_type' : splitted_filename[4],
+            'id' : splitted_filename[5],
+            'suffix' : '_'.join(splitted_filename[6:]).split('.wav')[0]
+        })
+
+    #Loop through filenames
+    for filename in test_files:
+
+        #Get filename as list of string
+        splitted_filename = filename.split('_')
+        #Append dictionnary to list
+        list_dict_file.append({
+            'filepath' : path_test_folder  + "/" + filename,
+            'filename' : filename,
+            # Handle non-integer values in 'section' column
+            'section' : splitted_filename[1] if splitted_filename[1].isdigit() else None,
+            'domain_env' : splitted_filename[2],
+            'dir' : splitted_filename[3],
+            'sound_type' : splitted_filename[4],
+            'id' : splitted_filename[5],
+            'suffix' : '_'.join(splitted_filename[6:]).split('.wav')[0]
+        })
+
+    return pd.DataFrame(list_dict_file)
+
+"""Function to get the data matrix of amplitude spectrograms and the data matrix of phase spectrograms from a dataframe"""
+
+def load_audio(file_path):
+    y, sr = librosa.load(file_path, sr = None)
+    return y, sr
+
+def spectrogram(audio, n_fft = 1024, hop_length = 512):
+    spectrum = librosa.stft(audio, n_fft = n_fft, hop_length = hop_length, center = False)
+    # Chose center = False above after doing a test on a simple superposition of two sin with two frequencies
+    # There are boundary artifacts in the spectrograms if center = True
+    # Not investigated why it is like this but the spectrograms look definitely better with center = False
+    # To be confirmed
+    magnitude, phase = librosa.magphase(spectrum)
+    magnitude_in_db = librosa.amplitude_to_db(magnitude, ref=1e-6)
+    # or ref=np.max. ref = 1e-6 corresponds to the threshold intensity for humans = 1e-12 W/m2
+    # Not sure of the units. Does not matter, I just want a fixed ref for all spectrograms
+    return magnitude_in_db, np.angle(phase)
+
+def get_spectros_from_df(df, n_fft = 1024, hop_length = 512):
+    def path_to_spectra(path):
+        y, sr = load_audio(path)
+        mag_sp, phase_sp = spectrogram(y, n_fft = n_fft, hop_length = hop_length)
+        return mag_sp.flatten(), phase_sp.flatten()
+
+    filepaths = df['filepath'].reset_index(drop = True)
+    X_tmp = path_to_spectra(filepaths.iloc[0])[0]     # to get the size of a flatten spectrum
+    X_mag = np.empty((filepaths.shape[0], X_tmp.size))
+    X_phase = np.empty((filepaths.shape[0], X_tmp.size))
+
+    for i, path in filepaths.items():
+        mag_sp, phase_sp = path_to_spectra(path)
+        X_mag[i] = mag_sp
+        X_phase[i] = phase_sp
+
+    return X_mag, X_phase
 
 
-# 6. Evaluate 
+#X_mag, X_phase = get_spectros_from_df(df_gearbox[(df_gearbox['dir']=='test') & (df_gearbox['section']==0)])
 
-# Convert one-hot encoded labels to class indices if needed
-if y_test.ndim == 2 and y_test.shape[1] > 1:
-    y_test_indices = np.argmax(y_test, axis=1)
-else:
-    y_test_indices = y_test  # If y_test is already in integer form
 
-# Convert y_pred to class indices
-y_pred_indices = np.argmax(y_pred, axis=1)
+# Choose the machine
+machine_str = 'gearbox'
 
-# Generate the classification report
-cr = classification_report(y_test_indices, y_pred_indices, target_names=class_labels)
-print(cr)
+# Fix the parameters
+params = dict(n_fft = 1024,        # n_fft paramater for calculating the spectrograms with librosa.stft
+              hop_length = 512     # hop_length paramater for calculating the spectrograms with librosa.stft
+             )
 
-# Calculate and print the overall accuracy
-accuracy = accuracy_score(y_test_indices, y_pred_indices)
-print(f"Overall Accuracy: {accuracy}")
+df = build_dataframe(machine_str)
 
-# 7. Save Model
+df_normal = df[df['sound_type']=='normal'].sample(n = 50, random_state = 1)
+df_anormal = df[df['sound_type']=='anomaly'].sample(n = 50, random_state = 1)
+data = pd.concat([df_normal, df_anormal], axis = 0).reset_index()
 
-model.save('fashion_mnist_cnn_model.h5')
+X_mag, X_phase = get_spectros_from_df(data, n_fft = params['n_fft'], hop_length = params['hop_length'])
 
-#Load Model
+target = data['sound_type']
+target = target.replace(to_replace = ['normal', 'anomaly'], value = [0, 1])
 
-fashion_model = tf.keras.models.load_model('fashion_mnist_cnn_model.h5')
+# Choose here if the training is done on the amplitude spectrogram, phase spectrogram or both
+which = 'amplitude'      # 'amplitude', 'phase', or 'both'
+
+def my_train_test_split(X_mag, X_phase, target, which = 'amplitude', test_size = 0.2, random_state = 123):
+    if which == 'amplitude':
+        X = X_mag
+    elif which == 'phase':
+        X = X_phase
+    elif which == 'both':
+        X = np.concatenate([X_mag, X_phase], axis = 1)
+    else:
+        raise ValueError("'which' must be equal to 'amplitude', 'phase' or 'both'")
+
+    X_train, X_test, y_train, y_test = train_test_split(X, target, test_size = test_size, random_state = random_state)
+
+    return X_train, X_test, y_train, y_test
+
+X_train, X_test, y_train, y_test = my_train_test_split(X_mag, X_phase, target, which = which)
+
+X_red_train, X_red_test = X_train, X_test
+
+
+# We reduce the number of features by computing the means of the spectrograms per column
+def dim_reduce_by_spcol(X_train, X_test, n_fft = 1024, \
+                        mean = True, median = False, mini = False, maxi = False, std = False):
+    # Reshape 2D X_train, X_test to 3D arrays ie unflatten the spectrograms
+    # The number of lines in the original spectrogram is 1 + int(n_fft/2)
+    X_train = np.reshape(X_train, (X_train.shape[0], 1 + int(n_fft/2), -1))
+    X_test = np.reshape(X_test, (X_test.shape[0], 1 + int(n_fft/2), -1))
+
+    X_train_red = np.empty((X_train.shape[0], 0))
+    X_test_red = np.empty((X_test.shape[0], 0))
+    if mean:
+        X_train_red  = np.hstack([X_train_red, np.mean(X_train, axis = 1)])
+        X_test_red  = np.hstack([X_test_red, np.mean(X_test, axis = 1)])
+    if median:
+        X_train_red  = np.hstack([X_train_red, np.median(X_train, axis = 1)])
+        X_test_red  = np.hstack([X_test_red, np.median(X_test, axis = 1)])
+    if mini:
+        X_train_red  = np.hstack([X_train_red, np.amin(X_train, axis = 1)])
+        X_test_red  = np.hstack([X_test_red, np.amin(X_test, axis = 1)])
+    if maxi:
+        X_train_red  = np.hstack([X_train_red, np.amax(X_train, axis = 1)])
+        X_test_red  = np.hstack([X_test_red, np.amax(X_test, axis = 1)])
+    if std:
+        X_train_red  = np.hstack([X_train_red, np.std(X_train, axis = 1)])
+        X_test_red  = np.hstack([X_test_red, np.std(X_test, axis = 1)])
+
+    return X_train_red, X_test_red
+
+# Choose how to reduce the spectrograms
+params_red = dict(mean = True,
+                  median = False,
+                  mini = False,
+                  maxi = False,
+                  std = True
+                 )
+
+X_red_train, X_red_test = dim_reduce_by_spcol(X_train, X_test, n_fft = params['n_fft'], **params_red)
+
+print(X_red_train.shape)
+print(X_train.shape)
+
+sel = SelectPercentile(score_func = f_classif, percentile = 30)
+sel.fit(X_train, y_train)
+X_red_train = sel.transform(X_train)
+X_red_test = sel.transform(X_test)
+
+n_feats = X_red_train.shape[1]
+pca = PCA(n_components = 0.85)       # keep 85% of variance
+pca.fit(X_red_train)
+X_red_train = pca.transform(X_red_train)
+X_red_test = pca.transform(X_red_test)
+
+print("Number of initial features = ", n_feats)
+print("Number of selected features = ", pca.n_components_)
+
+"""I find empirically that n_components = 0.85 is a good choice (looking at test AUC calculated with xgboost) but this should be done more rigorously"""
+
+plt.scatter(X_red_train[:,0], X_red_train[:,1], c = y_train)
+plt.xlabel("PCA axis 0")
+plt.ylabel("PCA axis 1")
+plt.title("Projection of the first two PCA axis");
+
+"""## Machine learning
+
+#### First classification method : Gradient Boosting
+"""
+
+# Convert arrays to DMatrices
+M_red_train = xgb.DMatrix(X_red_train, y_train)
+M_red_test = xgb.DMatrix(X_red_test, y_test)
+
+# Training
+params_xgb = {'booster': 'gbtree',
+              'learning_rate': 0.3,
+              'alpha': 0.001,     # L1 regularization term
+              'eval_metric': 'error',
+              'objective': 'binary:logistic'}
+
+xgb_model = xgb.train(dtrain = M_red_train, params = params_xgb, num_boost_round = 1000, \
+                      early_stopping_rounds = 20, evals = [(M_red_train, 'train'), (M_red_test, 'test')])
+
+train_pred_probas = xgb_model.predict(M_red_train, iteration_range = (0, xgb_model.best_iteration + 1))
+train_preds = pd.Series(np.where(train_pred_probas>0.5, 1, 0))
+
+test_pred_probas = xgb_model.predict(M_red_test, iteration_range = (0, xgb_model.best_iteration + 1))
+test_preds = pd.Series(np.where(test_pred_probas>0.5, 1, 0))
+
+
+ratios = np.linspace(0, 1, 10)
+
+train_errors = []    # list to store train errors
+test_errors = []    # list to store test errors
+for ratio in ratios:
+    params_xgb = {'booster': 'gbtree',
+          'learning_rate': 1,
+          'alpha': 0.001,     # L1 regularization term
+          'subsample': ratio,
+          'eval_metric': 'error',
+          'objective': 'binary:logistic'}
+
+    xgb_model = xgb.train(dtrain = M_red_train, params = params_xgb, num_boost_round = 1000, \
+                  early_stopping_rounds = 20, evals = [(M_red_train, 'train'), (M_red_test, 'test')], \
+                  verbose_eval = False)
+
+    train_pred_probas = xgb_model.predict(M_red_train, iteration_range = (0, xgb_model.best_iteration + 1))
+    train_preds = pd.Series(np.where(train_pred_probas>0.5, 1, 0))
+    train_error = 1 - accuracy_score(y_train, train_preds)
+
+    test_pred_probas = xgb_model.predict(M_red_test, iteration_range = (0, xgb_model.best_iteration + 1))
+    test_preds = pd.Series(np.where(test_pred_probas>0.5, 1, 0))
+    test_error = 1 - accuracy_score(y_test, test_preds)
+
+    train_errors.append(train_error)
+    test_errors.append(test_error)
+
+fig = plt.figure(figsize = (7, 5))
+plt.plot(ratios, train_errors, 'r-o', label = 'Train error')
+plt.plot(ratios, test_errors, 'b-s', label = 'Test error')
+plt.xlabel("Fraction of sampled observations")
+plt.ylabel("Train/test errors")
+plt.legend()
+
+learning_rates = [0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10]
+alphas = [0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10]
+
+aucs = []    # list to store auc
+for alpha in alphas:
+    for learning_rate in learning_rates:
+        params_xgb = {'booster': 'gbtree',
+              'learning_rate': learning_rate,
+              'alpha': alpha,     # L1 regularization term
+              'eval_metric': 'error',
+              'objective': 'binary:logistic'}
+
+        xgb_model = xgb.train(dtrain = M_red_train, params = params_xgb, num_boost_round = 1000, \
+                      early_stopping_rounds = 20, evals = [(M_red_train, 'train'), (M_red_test, 'test')], \
+                      verbose_eval = False)
+
+        pred_probas = xgb_model.predict(M_red_test, iteration_range = (0, xgb_model.best_iteration + 1))
+        preds = pd.Series(np.where(pred_probas>0.5, 1, 0))
+        auc = roc_auc_score(y_test, preds)
+        aucs.append([alpha, learning_rate, auc])
+
+aucs = np.array(aucs)
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (15, 5))
+for lr in learning_rates:
+    aucs_lr = aucs[aucs[:,1]==lr]
+    ax1.plot(aucs_lr[:,0], aucs_lr[:,2], "-o", label = "lr = " + str(lr))
+    ax1.set_xlabel("alpha")
+    ax1.set_ylabel("AUC")
+    ax1.set_xscale('log')
+    ax1.legend(loc = 'best')
+
+for alpha in alphas:
+    aucs_alpha = aucs[aucs[:,0]==alpha]
+    ax2.plot(aucs_alpha[:,1], aucs_alpha[:,2], "-o", label = "alpha = " + str(alpha))
+    ax2.set_xlabel("learning rate")
+    ax2.set_ylabel("AUC")
+    ax2.set_xscale('log')
+    ax2.legend(loc = 'best')
+
+test_f1_score_0 = f1_score(y_test, test_preds, pos_label = 0)
+test_f1_score_1 = f1_score(y_test, test_preds, pos_label = 1)
+train_f1_score_0 = f1_score(y_train, train_preds, pos_label = 0)
+train_f1_score_1 = f1_score(y_train, train_preds, pos_label = 1)
+test_auc = roc_auc_score(y_test, test_preds)
+train_auc = roc_auc_score(y_train, train_preds)
+
+print("f1 score of class 0 on test set = ", np.round(test_f1_score_0, 3))
+print("f1 score of class 1 on test set = ", np.round(test_f1_score_1, 3))
+print("f1 score of class 0 on train set = ", np.round(train_f1_score_0, 3))
+print("f1 score of class 1 on train set = ", np.round(train_f1_score_1, 3))
+print("Train AUC = ", np.round(train_auc, 3))
+print("Test AUC = ", np.round(test_auc, 3))
+
+#pd.crosstab(y_test.values, test_preds.values, rownames = ['Classe réelle'], colnames = ['Classe prédite'])
+pd.crosstab(y_test, test_preds, rownames = ['Classe réelle'], colnames = ['Classe prédite'])
+
+
+col_names = ["machine",
+             "section",
+             "which_spectro",
+             "Reduction_method",
+             "Reduction_params",
+             "Classif_method",
+             "Classif_params",
+             "Train AUC",
+             "Test AUC"]
+
+results = pd.DataFrame(columns = col_names)
+
+# 1st try ********************
+line = {
+        "machine": 'gearbox',
+        "section": 'all',
+        "which_spectro": "phase",
+        "Reduction_method": "spectro cols",
+        "Reduction_params": 'mean',
+        "Classif_method": 'xgboost',
+        "Classif_params": 'num_boost_r=1000, alpha=0.001, lr=1',
+        "Train AUC": 1,
+        "Test AUC": 0.48
+        }
+
+results.loc[len(results)] = line
+
+# 2nd try ********************
+line = {
+        "machine": 'gearbox',
+        "section": 'all',
+        "which_spectro": "amplitude",
+        "Reduction_method": "spectro cols",
+        "Reduction_params": 'mean',
+        "Classif_method": 'xgboost',
+        "Classif_params": 'num_boost_r=1000, alpha=0.001, lr=1',
+        "Train AUC": 0.999,
+        "Test AUC": 0.608
+        }
+
+results.loc[len(results)] = line
+
+# 3rd try ********************
+line = {
+        "machine": 'gearbox',
+        "section": 'all',
+        "which_spectro": "both",
+        "Reduction_method": "spectro cols",
+        "Reduction_params": 'mean',
+        "Classif_method": 'xgboost',
+        "Classif_params": 'num_boost_r=1000, alpha=0.001, lr=1',
+        "Train score": 1,
+        "Train AUC": 1,
+        "Test AUC": 0.64
+        }
+
+results.loc[len(results)] = line
+
+# 4th try ********************
+line = {
+        "machine": 'gearbox',
+        "section": 'all',
+        "which_spectro": "amplitude",
+        "Reduction_method": "spectro cols",
+        "Reduction_params": 'mean+med',
+        "Classif_method": 'xgboost',
+        "Classif_params": 'num_boost_r=1000, alpha=0.001, lr=1',
+        "Train AUC": 1,
+        "Test AUC": 0.687
+        }
+
+results.loc[len(results)] = line
+
+# 5th try ********************
+line = {
+        "machine": 'gearbox',
+        "section": 'all',
+        "which_spectro": "amplitude",
+        "Reduction_method": "spectro cols",
+        "Reduction_params": "mean+med+min+max",
+        "Classif_method": 'xgboost',
+        "Classif_params": 'num_boost_r=1000, alpha=0.001, lr=1',
+        "Train AUC": 1,
+        "Test AUC": 0.585
+        }
+
+results.loc[len(results)] = line
+
+# 6th try ********************
+line = {
+        "machine": 'gearbox',
+        "section": 'all',
+        "which_spectro": "phase",
+        "Reduction_method": "spectro cols",
+        "Reduction_params": "mean+med+min+max",
+        "Classif_method": 'xgboost',
+        "Classif_params": 'num_boost_r=1000, alpha=0.001, lr=1',
+        "Train AUC": 1,
+        "Test AUC": 0.543
+        }
+
+results.loc[len(results)] = line
+
+# 7th try ********************
+line = {
+        "machine": 'gearbox',
+        "section": 'all',
+        "which_spectro": "phase",
+        "Reduction_method": "spectro cols",
+        "Reduction_params": "mean+med",
+        "Classif_method": 'xgboost',
+        "Classif_params": 'num_boost_r=1000, alpha=0.001, lr=1',
+        "Train AUC": 1,
+        "Test AUC": 0.482
+        }
+
+results.loc[len(results)] = line
+
+# 7th try ********************
+line = {
+        "machine": 'gearbox',
+        "section": 'all',
+        "which_spectro": "amplitude",
+        "Reduction_method": "spectro cols",
+        "Reduction_params": "mean+med+std",
+        "Classif_method": 'xgboost',
+        "Classif_params": 'num_boost_r=1000, alpha=0.001, lr=1',
+        "Train AUC": 1,
+        "Test AUC": 0.685
+        }
+
+results.loc[len(results)] = line
+
+# 8th try ********************
+line = {
+        "machine": 'gearbox',
+        "section": 'all',
+        "which_spectro": "amplitude",
+        "Reduction_method": "spectro cols",
+        "Reduction_params": "mean+std",
+        "Classif_method": 'xgboost',
+        "Classif_params": 'num_boost_r=1000, alpha=0.001, lr=1',
+        "Train AUC": 1,
+        "Test AUC": 0.672
+        }
+
+results.loc[len(results)] = line
+
+# 9th try ********************
+line = {
+        "machine": 'gearbox',
+        "section": 'all',
+        "which_spectro": "both",
+        "Reduction_method": "spectro cols",
+        "Reduction_params": "mean+std",
+        "Classif_method": 'xgboost',
+        "Classif_params": 'num_boost_r=1000, alpha=0.001, lr=1',
+        "Train AUC": 0.917,
+        "Test AUC": 0.588
+        }
+
+results.loc[len(results)] = line
+
+# 10th try ********************
+line = {
+        "machine": 'gearbox',
+        "section": 'all',
+        "which_spectro": "amplitude",
+        "Reduction_method": None,
+        "Reduction_params": None,
+        "Classif_method": 'xgboost',
+        "Classif_params": 'num_boost_r=1000, alpha=0.001, lr=1',
+        "Train AUC": 1,
+        "Test AUC": 0.698
+        }
+
+results.loc[len(results)] = line
+
+# 11th try ********************
+line = {
+        "machine": 'gearbox',
+        "section": 'all',
+        "which_spectro": "both",
+        "Reduction_method": None,
+        "Reduction_params": None,
+        "Classif_method": 'xgboost',
+        "Classif_params": 'num_boost_r=1000, alpha=0.001, lr=1',
+        "Train AUC": 1,
+        "Test AUC": 0.657
+        }
+
+results.loc[len(results)] = line
+
+# 12th try ********************
+line = {
+        "machine": 'gearbox',
+        "section": 'all',
+        "which_spectro": "phase",
+        "Reduction_method": None,
+        "Reduction_params": None,
+        "Classif_method": 'xgboost',
+        "Classif_params": 'num_boost_r=1000, alpha=0.001, lr=1',
+        "Train AUC": 1,
+        "Test AUC": 0.565
+        }
+
+results.loc[len(results)] = line
+
+# 13th try ********************
+line = {
+        "machine": 'gearbox',
+        "section": 'all',
+        "which_spectro": "amplitude",
+        "Reduction_method": 'Percentile',
+        "Reduction_params": "20%",
+        "Classif_method": 'xgboost',
+        "Classif_params": 'num_boost_r=1000, alpha=0.001, lr=1',
+        "Train AUC": 1,
+        "Test AUC": 0.718
+        }
+
+results.loc[len(results)] = line
+
+# 14th try ********************
+line = {
+        "machine": 'gearbox',
+        "section": 'all',
+        "which_spectro": "amplitude",
+        "Reduction_method": 'Percentile',
+        "Reduction_params": "30%",
+        "Classif_method": 'xgboost',
+        "Classif_params": 'num_boost_r=1000, alpha=0.001, lr=1',
+        "Train AUC": 1,
+        "Test AUC": 0.767
+        }
+
+results.loc[len(results)] = line
+
+# 15th try ********************
+line = {
+        "machine": 'gearbox',
+        "section": 'all',
+        "which_spectro": "amplitude",
+        "Reduction_method": 'Percentile',
+        "Reduction_params": "40%",
+        "Classif_method": 'xgboost',
+        "Classif_params": 'num_boost_r=1000, alpha=0.001, lr=1',
+        "Train AUC": 1,
+        "Test AUC": 0.677
+        }
+
+results.loc[len(results)] = line
+
+# 16th try ********************
+line = {
+        "machine": 'gearbox',
+        "section": 'all',
+        "which_spectro": "both",
+        "Reduction_method": 'Percentile',
+        "Reduction_params": "30%",
+        "Classif_method": 'xgboost',
+        "Classif_params": 'num_boost_r=1000, alpha=0.001, lr=1',
+        "Train AUC": 1,
+        "Test AUC": 0.747
+        }
+
+results.loc[len(results)] = line
+
+# 17th try ********************
+line = {
+        "machine": 'gearbox',
+        "section": 'all',
+        "which_spectro": "amplitude",
+        "Reduction_method": 'Percentile + PCA',
+        "Reduction_params": "perc : 30%; pca : 95%",
+        "Classif_method": 'xgboost',
+        "Classif_params": 'num_boost_r=1000, alpha=0.001, lr=1',
+        "Train AUC": 1,
+        "Test AUC": 0.788
+        }
+
+results.loc[len(results)] = line
+
+# 18th try ********************
+line = {
+        "machine": 'gearbox',
+        "section": 'all',
+        "which_spectro": "amplitude",
+        "Reduction_method": 'Percentile + PCA',
+        "Reduction_params": "perc : 30%; pca : 90%",
+        "Classif_method": 'xgboost',
+        "Classif_params": 'num_boost_r=1000, alpha=0.001, lr=1',
+        "Train AUC": 1,
+        "Test AUC": 0.847
+        }
+
+results.loc[len(results)] = line
+
+# 19th try ********************
+line = {
+        "machine": 'gearbox',
+        "section": 'all',
+        "which_spectro": "amplitude",
+        "Reduction_method": 'Percentile + PCA',
+        "Reduction_params": "perc : 30%; pca : 80%",
+        "Classif_method": 'xgboost',
+        "Classif_params": 'num_boost_r=1000, alpha=0.001, lr=1',
+        "Train AUC": 0.857,
+        "Test AUC": 0.767
+        }
+
+results.loc[len(results)] = line
+
+# 19th try ********************
+line = {
+        "machine": 'gearbox',
+        "section": 'all',
+        "which_spectro": "amplitude",
+        "Reduction_method": 'Percentile + PCA',
+        "Reduction_params": "perc : 30%; pca : 85%",
+        "Classif_method": 'xgboost',
+        "Classif_params": 'num_boost_r=1000, alpha=0.001, lr=1',
+        "Train AUC": 1,
+        "Test AUC": 0.86
+        }
+
+results.loc[len(results)] = line
+
+# 20th try ********************
+line = {
+        "machine": 'gearbox',
+        "section": 'all',
+        "which_spectro": "both",
+        "Reduction_method": 'Percentile + PCA',
+        "Reduction_params": "perc : 30%; pca : 85%",
+        "Classif_method": 'xgboost',
+        "Classif_params": 'num_boost_r=1000, alpha=0.001, lr=1',
+        "Train AUC": 1,
+        "Test AUC": 0.887
+        }
+
+results.loc[len(results)] = line
+
+# 21th try ********************
+line = {
+        "machine": 'gearbox',
+        "section": 'all',
+        "which_spectro": "amplitude",
+        "Reduction_method": 'Percentile + PCA',
+        "Reduction_params": "perc : 30%; pca : 85%",
+        "Classif_method": 'xgboost',
+        "Classif_params": 'num_boost_r=1000, alpha=0.01, lr=0.3',
+        "Train AUC": 1,
+        "Test AUC": 0.877
+        }
+
+results.loc[len(results)] = line
+
+# 22th try ********************
+line = {
+        "machine": 'gearbox',
+        "section": 'all',
+        "which_spectro": "both",
+        "Reduction_method": 'Percentile + PCA',
+        "Reduction_params": "perc : 30%; pca : 85%",
+        "Classif_method": 'xgboost',
+        "Classif_params": 'num_boost_r=1000, alpha=0.001, lr=0.3',
+        "Train AUC": 1,
+        "Test AUC": 0.903
+        }
+
+results.loc[len(results)] = line
+
+# 22th try ********************
+line = {
+        "machine": 'gearbox',
+        "section": 'all',
+        "which_spectro": "phase",
+        "Reduction_method": 'Percentile + PCA',
+        "Reduction_params": "perc : 30%; pca : 85%",
+        "Classif_method": 'xgboost',
+        "Classif_params": 'num_boost_r=1000, alpha=0.001, lr=0.3',
+        "Train AUC": 1,
+        "Test AUC": 0.5
+        }
+
+results.loc[len(results)] = line
+
+
+
+results.loc[len(results)] = line
+
+
+# Show the results
+results.sort_values(by = 'Test AUC', ascending = False)
+
+def compute_aucs_cv(machine_str, which, params, params_xgb):
+    # Create features data and target
+    df = build_dataframe(machine_str)
+
+    df_normal = df[df['sound_type']=='normal'].sample(n = 100, random_state = 1)
+    df_anormal = df[df['sound_type']=='anomaly'].sample(n = 100, random_state = 1)
+    data = pd.concat([df_normal, df_anormal], axis = 0).reset_index()
+
+    X_mag, X_phase = get_spectros_from_df(data, n_fft = params['n_fft'], hop_length = params['hop_length'])
+
+    target = data['sound_type']
+    target = target.replace(to_replace = ['normal', 'anomaly'], value = [0, 1])
+
+    # Here I don't want to split in train and test splits and want to keep all the data for the cross-validation
+    X_train, X_test, y_train, y_test = my_train_test_split(X_mag, X_phase, target, which = which, test_size = 0.01)
+
+    # Reduction of dimensionality
+    print("Number of initial features = ", X_train.shape[1])
+
+    sel = SelectPercentile(score_func = f_classif, percentile = 30)
+    sel.fit(X_train, y_train)
+    X_red_train = sel.transform(X_train)
+    #X_red_test = sel.transform(X_test)
+
+    pca = PCA(n_components = 0.85)       # keep 85% of variance
+    pca.fit(X_red_train)
+    X_red_train = pca.transform(X_red_train)
+    #X_red_test = pca.transform(X_red_test)
+
+    print("Number of selected features after SelectPercentile + PCA = ", pca.n_components_)
+
+    # Convert arrays to DMatrices
+    M_red_train = xgb.DMatrix(X_red_train, y_train)
+    #M_red_test = xgb.DMatrix(X_red_test, y_test)
+
+    # Cross-val
+    seeds = np.arange(50)
+    test_aucs = []
+    test_errors = []
+
+    for seed in seeds:
+        results_cv = xgb.cv(dtrain = M_red_train, params = params_xgb, num_boost_round = 1000, seed = seed, \
+                            early_stopping_rounds = 20, metrics = ['auc', 'error'], nfold = 5)
+
+        #display(results_cv)
+
+        test_aucs.append([seed, results_cv['test-auc-mean'].max(), \
+                          results_cv['test-auc-std'].iloc[results_cv['test-auc-mean'].argmax()]])
+        test_errors.append([seed, results_cv['test-error-mean'].min(), \
+                          results_cv['test-error-std'].iloc[results_cv['test-error-mean'].argmin()]])
+
+    return np.array(test_aucs), np.array(test_errors)
+
+# Choose the machine
+machine_str = 'gearbox'
+
+# Choose here if the training is done on the amplitude spectrogram, phase spectrogram or both
+which = 'amplitude'      # 'amplitude', 'phase', or 'both'
+
+# Fix the parameters
+params = dict(n_fft = 1024,        # n_fft paramater for calculating the spectrograms with librosa.stft
+              hop_length = 512     # hop_length paramater for calculating the spectrograms with librosa.stft
+             )
+
+params_xgb = {'booster': 'gbtree',
+              'learning_rate': 0.3,
+              'alpha': 0.01,     # L1 regularization term
+              'eval_metric': 'error',
+              'objective': 'binary:logistic'}
+
+test_aucs_ampl, test_errors_ampl = compute_aucs_cv(machine_str, 'amplitude', params, params_xgb)
+# Here I should change the optimized params_xgb for both (not done ...)
+test_aucs_both, test_errors_both = compute_aucs_cv(machine_str, 'both', params, params_xgb)
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (15, 7))
+
+ax1.plot(test_aucs_ampl[:, 0], test_aucs_ampl[:, 1], 'r-', label = 'amplitude')
+ax1.fill_between(test_aucs_ampl[:, 0], test_aucs_ampl[:, 1] - test_aucs_ampl[:, 2], \
+                 test_aucs_ampl[:, 1] + test_aucs_ampl[:, 2], color='r', alpha=0.1)
+
+ax1.plot(test_aucs_both[:, 0], test_aucs_both[:, 1], 'b-', label = 'both')
+ax1.fill_between(test_aucs_both[:, 0], test_aucs_both[:, 1] - test_aucs_both[:, 2], \
+                 test_aucs_both[:, 1] + test_aucs_both[:, 2], color='b', alpha=0.1)
+ax1.set_xlabel("Cross-validation seed")
+ax1.set_ylabel("Test AUC")
+ax1.set_ylim([0.7, 1])
+ax1.legend()
+ax1.set_title('gearbox')
+ax1.grid(True);
+
+ax2.plot(test_errors_ampl[:, 0], test_errors_ampl[:, 1], 'r-', label = 'amplitude')
+ax2.fill_between(test_errors_ampl[:, 0], test_errors_ampl[:, 1] - test_errors_ampl[:, 2], \
+                 test_errors_ampl[:, 1] + test_errors_ampl[:, 2], color='r', alpha=0.1)
+
+ax2.plot(test_errors_both[:, 0], test_errors_both[:, 1], 'b-', label = 'both')
+ax2.fill_between(test_errors_both[:, 0], test_errors_both[:, 1] - test_errors_both[:, 2], \
+                 test_errors_both[:, 1] + test_errors_both[:, 2], color='b', alpha=0.1)
+ax2.set_xlabel("Cross-validation seed")
+ax2.set_ylabel("Test binary classification error rate")
+ax2.set_ylim([0, 0.3])
+ax2.legend()
+ax2.set_title('gearbox')
+ax2.grid(True);
+
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (15, 7))
+
+ax1.plot(test_aucs_ampl[:, 0], test_aucs_ampl[:, 1], 'r-', label = 'amplitude')
+ax1.fill_between(test_aucs_ampl[:, 0], test_aucs_ampl[:, 1] - test_aucs_ampl[:, 2], \
+                 test_aucs_ampl[:, 1] + test_aucs_ampl[:, 2], color='r', alpha=0.1)
+
+ax1.plot(test_aucs_both[:, 0], test_aucs_both[:, 1], 'b-', label = 'both')
+ax1.fill_between(test_aucs_both[:, 0], test_aucs_both[:, 1] - test_aucs_both[:, 2], \
+                 test_aucs_both[:, 1] + test_aucs_both[:, 2], color='b', alpha=0.1)
+ax1.set_xlabel("Cross-validation seed")
+ax1.set_ylabel("Test AUC")
+ax1.set_ylim([0.7, 1])
+ax1.legend()
+ax1.set_title('fan')
+ax1.grid(True);
+
+ax2.plot(test_errors_ampl[:, 0], test_errors_ampl[:, 1], 'r-', label = 'amplitude')
+ax2.fill_between(test_errors_ampl[:, 0], test_errors_ampl[:, 1] - test_errors_ampl[:, 2], \
+                 test_errors_ampl[:, 1] + test_errors_ampl[:, 2], color='r', alpha=0.1)
+
+ax2.plot(test_errors_both[:, 0], test_errors_both[:, 1], 'b-', label = 'both')
+ax2.fill_between(test_errors_both[:, 0], test_errors_both[:, 1] - test_errors_both[:, 2], \
+                 test_errors_both[:, 1] + test_errors_both[:, 2], color='b', alpha=0.1)
+ax2.set_xlabel("Cross-validation seed")
+ax2.set_ylabel("Test binary classification error rate")
+ax2.set_ylim([0, 0.3])
+ax2.legend()
+ax2.set_title('fan')
+ax2.grid(True);
+
+# Fix the parameters
+params = dict(n_fft = 1024,        # n_fft paramater for calculating the spectrograms with librosa.stft
+              hop_length = 512     # hop_length paramater for calculating the spectrograms with librosa.stft
+             )
+
+params_xgb = {'booster': 'gbtree',
+              'learning_rate': 0.3,
+              'alpha': 0.01,     # L1 regularization term
+              'eval_metric': 'error',
+              'objective': 'binary:logistic'}
+
+dict_results = {}
+for machine in ['gearbox']:
+    test_aucs_ampl, test_errors_ampl = compute_aucs_cv(machine, 'amplitude', params, params_xgb)
+    dict_results[machine] = test_aucs_ampl, test_errors_ampl
+
+# Save the results into a file
+np.save('dict_results_classif_PCAxgboost.npy', dict_results)
+
+# To load the results
+#new_dict = np.load('dict_results_classif_PCAxgboost.npy', allow_pickle='TRUE')
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (15, 5))
+
+for machine in [ 'gearbox']:
+    test_aucs_ampl, test_errors_ampl = dict_results[machine]
+    ax1.plot(test_aucs_ampl[:, 0], test_aucs_ampl[:, 1], label = machine)
+    ax1.fill_between(test_aucs_ampl[:, 0], test_aucs_ampl[:, 1] - test_aucs_ampl[:, 2], \
+                     test_aucs_ampl[:, 1] + test_aucs_ampl[:, 2], alpha=0.1)
+
+    ax2.plot(test_errors_ampl[:, 0], test_errors_ampl[:, 1], label = machine)
+    ax2.fill_between(test_errors_ampl[:, 0], test_errors_ampl[:, 1] - test_errors_ampl[:, 2], \
+                     test_errors_ampl[:, 1] + test_errors_ampl[:, 2], alpha=0.1)
+
+ax1.set_xlabel("Cross-validation seed", fontsize = 13.0)
+ax1.set_ylabel("Test AUC", fontsize = 13.0)
+ax1.set_ylim([0.75, 1])
+ax1.legend(loc = 'lower right')
+ax1.grid(axis = 'y')
+ax1.set_title("Supervised classification with PCA + xgboost", fontsize = 13.0)
+
+ax2.set_xlabel("Cross-validation seed", fontsize = 13.0)
+ax2.set_ylabel("Test binary classification error rate", fontsize = 13.0)
+#ax2.set_ylim([0, 0.3])
+ax2.legend(loc = 'lower right')
+ax2.grid(axis = 'y')
+ax2.set_title("Supervised classification with PCA + xgboost", fontsize = 13.0);
+
+dict_aucs = {}
+dict_errors = {}
+
+for machine in [ 'gearbox']:
+    test_aucs_ampl, test_errors_ampl = dict_results[machine]
+    dict_aucs[machine] = test_aucs_ampl[:,1].mean()
+    dict_errors[machine] = test_errors_ampl[:,1].mean()
+
+print(dict_aucs)
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (15, 3))
+
+ax1.bar(range(1), dict_aucs.values())
+ax1.set_xticks(range(1))
+ax1.set_xticklabels(dict_aucs.keys(), fontsize = 13.0)
+ax1.set_ylabel("Mean test AUC", fontsize = 13.0)
+ax1.grid(True, axis = 'y')
+
+ax2.bar(range(1), dict_errors.values())
+ax2.set_xticks(range(1))
+ax2.set_xticklabels(dict_errors.keys(), fontsize = 13.0)
+ax2.set_ylabel("Mean test binary \n classification error rate", fontsize = 13.0)
+ax2.grid(True, axis = 'y')
+
+dict_results = np.load('dict_results_classif_PCAxgboost.npy', allow_pickle='TRUE')
+
+test_aucs_ampl, test_errors_ampl = dict_results[()]['gearbox']
+print("AUC = ", test_aucs_ampl[:,1].mean())
+print('Error =', test_errors_ampl[:,1].mean())
 `;
 
 const codeSections = {

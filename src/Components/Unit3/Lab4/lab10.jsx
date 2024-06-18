@@ -23,192 +23,271 @@ import './lab10.css';
 hljs.registerLanguage('python', python);
 
 const codeSnippet2 = `
-# 1. Import Libraries
-
 import numpy as np
 import pandas as pd
-import tensorflow as tf
-from tensorflow import keras
-from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt 
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Dropout
-from sklearn.metrics import classification_report, accuracy_score
-
-# 2. Load Data
-
-train = pd.read_csv("./datasets/fashion-mnist_train.csv")
-test = pd.read_csv("./datasets/fashion-mnist_test.csv")
-
-train.head()
-
-# The catagories of clothing were in dataset
-class_labels= ["T-shirt/top","Trouser","Pullover" ,"Dress","Coat" ,"Sandal" ,"Shirt" ,"Sneaker" ,"Bag" ,"Ankle boot"]
-
-test.head()
-
-# store data as an array 
-train_data = np.array(train, dtype= "float32")
-test_data = np.array(test, dtype= "float32")
-
-x_train = train_data[:, 1:]
-y_train = train_data[:, 0]
-
-x_test = test_data[:, 1:]
-y_test = test_data[:, 0]
-
-# arrange pixel values between 0 to 1 
-x_train = x_train/255
-x_test = x_test/255
-
-# 3. Split Data
-
-x_train , x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.2)
-
-x_train = x_train.reshape(x_train.shape[0], 28, 28, 1)
-x_test = x_test.reshape(x_test.shape[0], 28, 28, 1)
-x_val = x_val.reshape(x_val.shape[0], 28, 28, 1)
-
-plt.imshow(x_train[1])
-print(y_train[1])
-
-# 4. Build a Deep Learning Model and Train the Model
-
-model = Sequential([
-    Conv2D(filters=32, kernel_size=3, strides=(1,1), padding='valid', activation='relu', input_shape=(28, 28, 1)),
-    MaxPooling2D(pool_size=(2,2)),
-    Conv2D(filters=64, kernel_size=3, strides=(2,2), padding='same', activation='relu'),
-    MaxPooling2D(pool_size=(2,2)),
-    Flatten(),
-    Dense(128, activation='relu'),
-    Dropout(0.25),
-    Dense(256, activation='relu'),
-    Dropout(0.25),
-    Dense(128, activation='relu'),
-    Dense(10, activation='softmax')  
-])
-
-model.compile(optimizer='adam', 
-                loss=tf.keras.losses.SparseCategoricalCrossentropy(),  # Use SparseCategoricalCrossentropy for multi-class classification
-                metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
-
-
-model.fit(x_train, y_train, epochs=20, batch_size=16, verbose=1, validation_data=(x_val, y_val))
-
-# 5. Test Model
-
-y_pred = model.predict(x_test)
-
-model.evaluate(x_test, y_test)
-
-# Plot the training and validation accuracy and loss
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+from sklearn.tree import export_text
+from sklearn.metrics import classification_report
 import matplotlib.pyplot as plt
+from sklearn.metrics import accuracy_score, confusion_matrix
+from IPython.display import Image, display
+from sklearn.model_selection import GridSearchCV
 
-plt.figure(figsize= (16,30))
-j=1
+np.random.seed(42)  # For reproducibility
+num_samples = 1000
 
-for i in np.random.randint(0, 1000,60):
-    plt.subplot(10,6, j)
-    j+=1
-    plt.imshow(x_test[i].reshape(28,28), cmap='Greys')
-    plt.title('Actual = {} / {} \nPredicted = {} / {}'.format(class_labels[int(y_test[i])], int(y_test[i]), class_labels[np.argmax(y_pred[i])], np.argmax(y_pred[i])))
-    plt.axis('off')
+# Generate random values for depth, rate, and precision using numpy's uniform distribution
+depth = np.random.uniform(1, 100, num_samples)
+rate = np.random.uniform(1, 1000, num_samples)
+precision = np.random.uniform(0, 1, num_samples)
+
+# Create a DataFrame with the generated data
+data = pd.DataFrame({'depth': depth, 'precision': precision, 'rate': rate})
+
+# Print the first few rows of the generated dataset
+print("Generated Dataset:")
+print(data.head())
+
+# classification function to assign classes based on depth, precision, and rate
+def classify(depth, precision, rate):
+    if depth > 80 and precision > 0.80:
+        return "very good"
+    elif depth > 60 and precision > 0.60 and rate > 600:
+        return "good"
+    elif depth > 40 and precision > 0.40 and rate > 400:
+        return "ok"
+    elif depth > 20 and precision > 0.20 and rate > 200:
+        return "bad"
+    else:
+        return "very bad"
+
+# Assign 'classes' based on classification function
+data['classes'] = data.apply(lambda row: classify(row['depth'], row['precision'], row['rate']), axis=1)
+
+# Print dataset before splitting
+print("Dataset before splitting:")
+print(data.head())
+
+# Step 2: Split Dataset into Features (X) and Target (y)
+X = data[['depth', 'precision', 'rate']]
+y = data['classes']
+
+# Step 3: Split into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Implement Pruning (Cost Complexity Pruning)
+path = clf.cost_complexity_pruning_path(X_train,y_train)
+ccp_alphas = path.ccp_alphas
+impurities = path.impurities
+
+clfs = []
+for ccp_alpha in ccp_alphas:
+    clf = DecisionTreeClassifier(random_state = 42, ccp_alpha = ccp_alpha)
+    clf.fit(X_train,y_train)
+    clfs.append(clf)
+
+train_scores = [clf.score(X_train,y_train) for clf in clfs]
+test_scores  = [clf.score(X_test, y_test) for clf in clfs]
+
+plt.figure(figsize=(10, 6))
+plt.plot(ccp_alphas, train_scores, marker='o', label='train', drawstyle="steps-post")
+plt.plot(ccp_alphas, test_scores, marker='o', label='test', drawstyle="steps-post")
+plt.xlabel('alpha')
+plt.ylabel('accuracy')
+plt.title('Accuracy vs alpha for training and testing sets')
+plt.legend()
+plt.show()
+
+optimal_clf = clfs[np.argmax(test_scores)]
+
+# Display the tree structure
+plt.figure(figsize=(20, 10))
+plot_tree(optimal_clf, filled=True, feature_names=['depth', 'precision', 'rate'], class_names=[str(i) for i in range(1, 6)])
+plt.show()
+
+# Print the decision rules
+tree_rules = export_text(optimal_clf, feature_names=['depth', 'precision', 'rate'])
+print(tree_rules)
+
+# Evaluate the optimal model
+y_pred = optimal_clf.predict(X_test)
+print(classification_report(y_test, y_pred))
+
+# Generate test data
+num_test_samples = 100
+test_depth = np.random.uniform(1, 100, num_test_samples)
+test_precision = np.random.uniform(0, 1, num_test_samples)
+test_speed = np.random.uniform(10, 1000, num_test_samples)
+
+test_data = pd.DataFrame({'depth': test_depth, 'precision': test_precision, 'rate': test_speed})
+
+# Classify test data
+test_data['actual_level'] = test_data.apply(lambda row: classify(row['depth'], row['precision'], row['rate']), axis=1)
+
+# Predict using the trained decision tree model
+test_X = test_data[['depth', 'precision', 'rate']]
+test_data['predicted_level'] = optimal_clf.predict(test_X)
+
+# Display test data with actual and predicted levels
+print(test_data.head())
 
 
-# 6. Evaluate 
+# Evaluate the model on test data
+accuracy = accuracy_score(test_data['actual_level'], test_data['predicted_level'])
+conf_matrix = confusion_matrix(test_data['actual_level'], test_data['predicted_level'])
 
-# Convert one-hot encoded labels to class indices if needed
-if y_test.ndim == 2 and y_test.shape[1] > 1:
-    y_test_indices = np.argmax(y_test, axis=1)
-else:
-    y_test_indices = y_test  # If y_test is already in integer form
+print(f"Accuracy on test data: {accuracy * 100:.2f}%")
+print("Confusion Matrix:")
+print(conf_matrix)
 
-# Convert y_pred to class indices
-y_pred_indices = np.argmax(y_pred, axis=1)
+test_X = pd.DataFrame({'depth': [80],
+                       'precision': [0.9],
+                       'rate': [860.228603]})
 
-# Generate the classification report
-cr = classification_report(y_test_indices, y_pred_indices, target_names=class_labels)
-print(cr)
+# Predict using the trained decision tree model
+predicted_level = optimal_clf.predict(test_X)
 
-# Calculate and print the overall accuracy
-accuracy = accuracy_score(y_test_indices, y_pred_indices)
-print(f"Overall Accuracy: {accuracy}")
+# Print the predicted level
+print(f"Predicted Level: {predicted_level[0]}")
 
-# 7. Save Model
+# 1. single hyper-parameter pre pruned tree
+#Let us implement single hyper-parameter max_depth.
+mean_scores = []
+depth_range = range(1, 21)
 
-model.save('fashion_mnist_cnn_model.h5')
+for depth in depth_range:
+    clf = DecisionTreeClassifier(max_depth=depth, random_state=42)
+    scores = cross_val_score(clf, X_train, y_train, cv=5)
+    mean_scores.append(scores.mean())
+    
+plt.figure(figsize=(10, 6))
+plt.plot(depth_range, mean_scores, marker='o')
+plt.xlabel('max_depth')
+plt.ylabel('Cross-Validated Accuracy')
+plt.title('Accuracy vs max_depth')
+plt.show()
 
-#Load Model
+# Find the optimal max_depth
+optimal_depth = depth_range[np.argmax(mean_scores)]
+print(f'Optimal max_depth: {optimal_depth}')
 
-fashion_model = tf.keras.models.load_model('fashion_mnist_cnn_model.h5')
+# Train the decision tree with the optimal max_depth
+spre_tree=DecisionTreeClassifier(max_depth=optimal_depth, random_state=42)
+spre_tree.fit(X_train, y_train)
+
+# Display the tree structure
+plt.figure(figsize=(20,10))
+plot_tree(spre_tree, filled=True, feature_names=['depth', 'precision', 'rate'], class_names=[str(i) for i in range(1, 6)])
+plt.show()
+
+spre_pruned_accuracy = spre_tree.score(X_test, y_test)
+print(f"Simple Pre-pruned Decision Tree Accuracy: {spre_pruned_accuracy:.4f}")
+
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import accuracy_score
+
+# Define parameters for Grid Search
+parameters = {
+    'criterion': ['entropy', 'gini'],
+    'splitter': ['best', 'random'],
+    'max_depth': [None, 1, 2, 3, 4, 5],
+    'max_features': ['sqrt', 'log2']
+}
+
+# Initialize the DecisionTreeClassifier
+clf = DecisionTreeClassifier(random_state=42)
+
+# Setup GridSearchCV
+hpre_tree = GridSearchCV(clf, param_grid=parameters, cv=5)
+
+# Fit GridSearchCV
+hpre_tree.fit(X_train, y_train)
+
+# Print best parameters and best score
+print("Best Parameters found: ", hpre_tree.best_params_)
+print("Best Score found: ", hpre_tree.best_score_)
+
+# Use the best estimator found by GridSearchCV to make predictions
+best_model = hpre_tree.best_estimator_
+y_pred = best_model.predict(X_test)
+
+# Evaluate the best model if needed
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy of the best model: {accuracy:.4f}")
+
+# Display the tree structure
+plt.figure(figsize=(20,10))
+plot_tree(hpre_tree.best_estimator_, filled=True, feature_names=['depth', 'precision', 'rate'], class_names=[str(i) for i in range(1, 6)])
+plt.show()
 `;
 
 const codeSections = {
-  Step1: `
-# Install libraries if not already installed
+  Step2: `
+np.random.seed(42) # For reproducibility
+num_samples = 1000
+# Generate random values for depth, rate, and precision using numpy's uni
+form distribution
+depth = np.random.uniform(1, 100, num_samples)
+rate = np.random.uniform(1, 1000, num_samples)
+precision = np.random.uniform(0, 1, num_samples)
+# Create a DataFrame with the generated data
+data = pd.DataFrame({'depth': depth, 'precision': precision, 'rate': ra
+te})
+# Print the first few rows of the generated dataset
+print("Generated Dataset:")
+print(data.head())
 
 
-!pip install tensorflow scikit-learn
-
-
-# Import libraries import numpy as np import tensorflow as tf
-from tensorflow.keras.preprocessing.image import ImageDataGenerator, img_to_array, load_img
- 
-from tensorflow.keras.applications import VGG16 from sklearn.model_selection import train_test_split from sklearn.preprocessing import StandardScaler from sklearn.metrics.pairwise import cosine_similarity from sklearn.neighbors import KNeighborsClassifier from sklearn.cluster import KMeans
-from sklearn.metrics import classification_report import matplotlib.pyplot as plt
-
-# Define the path to your dataset
-dataset_path = '/kaggle/input/real-life-industrial-dataset-of-casting-product'
-
-
-# Load dataset (assuming data is organized in directories by class) datagen = ImageDataGenerator(rescale=1./255)
-dataset = datagen.flow_from_directory(dataset_path, target_size=(224, 224), batch_size=32, class_mode='binary')
-
-
-# Function to load and prepare the data def load_data(dataset):
-features = [] labels = []
-for batch in dataset:
-X_batch, y_batch = batch features.extend(X_batch) labels.extend(y_batch)
-if len(features) >= dataset.samples: break
-return np.array(features), np.array(labels)
-
-
-X, y = load_data(dataset)
- 
-# Split data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42) # Normalize and reshape the features
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train.reshape(-1, 224 * 224 * 3))
-X_test = scaler.transform(X_test.reshape(-1, 224 * 224 * 3))
-
-
-# Load pre-trained VGG16 model for feature extraction
-base_model = VGG16(include_top=False, weights='imagenet', input_shape=(224, 224, 3))
-model = tf.keras.Model(inputs=base_model.input, outputs=base_model.get_layer('block5_pool').output)
-
-
-# Function to extract features
-def extract_features(model, data): features = model.predict(data)
-return features.reshape(features.shape[0], -1)
-
-
-X_train_features = extract_features(model, X_train.reshape(-1, 224, 224, 3))
-X_test_features = extract_features(model, X_test.reshape(-1, 224, 224, 3))
-
+# classification function to assign classes based on depth, precision, an
+d rate
+def classify(depth, precision, rate):
+  if depth > 80 and precision > 0.80:
+  return "very good"
+  elif depth > 60 and precision > 0.60 and rate > 600:
+  return "good"
+  elif depth > 40 and precision > 0.40 and rate > 400:
+  return "ok"
+  elif depth > 20 and precision > 0.20 and rate > 200:
+  return "bad"
+  else:
+  return "very bad"
+# Assign 'classes' based on classification function
+data['classes'] = data.apply(lambda row: classify(row['depth'], row['pr
+ecision'], row['rate']), axis=1)
+# Print dataset before splitting
+print("Dataset before splitting:")
+print(data.head())
+# Step 2: Split Dataset into Features (X) and Target (y)
+X = data[['depth', 'precision', 'rate']]
+y = data['classes']
+# Step 3: Split into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3
+, random_state=42)
 `,
-  SplitData: `
-from sklearn.model_selection import train_test_split
+  Step4: `
+train_scores = [clf.score(X_train,y_train) for clf in clfs]
+test_scores = [clf.score(X_test, y_test) for clf in clfs]
+plt.figure(figsize=(10, 6))
+plt.plot(ccp_alphas, train_scores, marker='o', label='train', drawstyle
+="steps-post")
+plt.plot(ccp_alphas, test_scores, marker='o', label='test', drawstyle="
+steps-post")
+plt.xlabel('alpha')
+plt.ylabel('accuracy')
+plt.title('Accuracy vs alpha for training and testing sets')
+plt.legend()
+plt.show()
 
-x_train , x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.2)
+optimal_clf = clfs[np.argmax(test_scores)]
+# Display the tree structure
+plt.figure(figsize=(20, 10))
 
-x_train = x_train.reshape(x_train.shape[0], 28, 28, 1)
-x_test = x_test.reshape(x_test.shape[0], 28, 28, 1)
-x_val = x_val.reshape(x_val.shape[0], 28, 28, 1)
+plot_tree(optimal_clf, filled=True, feature_names=['depth', 'precision'
+, 'rate'], class_names=[str(i) for i in range(1, 6)])
+plt.show()
 
-import matplotlib.pyplot as plt 
-
-plt.imshow(x_train[1])
-print(y_train[1])
 `,
   DeepLearningModel: `
   from tensorflow.keras.models import Sequential
@@ -332,18 +411,29 @@ const Lab2 = () => {
       <ParticleCanvas />
       <div className="Layout" style={{ display: "flex", justifyContent: "space-around", color: '#09F' }}>
       <div className="box3">
-          <h2>Decision Tree</h2> <br />
+          <h3> <strong onClick={() => handleHeadingClick("Step1")}>Step-1: Understanding Decision Trees</strong></h3> <br />
           <p>A decision tree is a popular machine learning algorithm used for classification and regression tasks. It is a tree-like model of decisions and their possible consequences. Here’s a simple breakdown of how it works:</p> <br />
           <ul>
-            <li><strong>Root Node:</strong> This is the topmost node in the tree, representing the entire dataset.</li>
-            <li><strong>Decision Nodes:</strong> These are nodes where the dataset is split into different subsets based on certain conditions.</li>
-            <li><strong>Leaf Nodes:</strong> These are terminal nodes that represent the final decision or output.</li>
+            <li><b>Root Node:</b> This is the topmost node in the tree, representing the entire dataset.</li>
+            <li><b>Decision Nodes:</b> These are nodes where the dataset is split into different subsets based on certain conditions.</li>
+            <li><b>Leaf Nodes:</b> These are terminal nodes that represent the final decision or output.</li>
           </ul> <br />
           <p>Each internal node of the tree represents a "test" or "decision" on an attribute (e.g., "Is depth {">"} 50?"), and each branch represents the outcome of that decision. The leaves represent the class labels or regression values.</p> <br />
           <img style={{width: '100%'}} src={Img1} alt="image1" /> <br /> <br />
           <img style={{width: '100%'}} src={Img2} alt="image2" /> <br /> <br />
 
-          <h2>How is a Decision Tree Built?</h2> <br />
+          <h3> <strong onClick={() => handleHeadingClick("Step2")}>Step-2:Generating Dataset and handle the data</strong></h3>
+          <p>Generated Dataset:</p>
+          <p>depth precision rate</p>
+          <ol style={{marginLeft: '25px'}}>
+          <li>38.079472 0.261706 185.947796</li>  
+          <li>95.120716 0.246979 542.359046</li>  
+          <li>73.467400 0.906255 873.072890</li>  
+          <li>60.267190 0.249546 732.492662</li>  
+          <li>16.445845 0.271950 806.754587</li>  
+          </ol> <br />
+
+          <h3> <strong onClick={() => handleHeadingClick("Step3")}>Step-3:Building a Decision Tree Built?</strong></h3> <br />
           <p>When using scikit-learn to build a decision tree for classification, the algorithm splits the data at each node in a way that maximizes the "purity" of the resulting subsets. Gini impurity is one of the metrics used to measure this purity.</p> <br />
           <ol>
             <li><strong>Initialize the Root Node:</strong> The process starts with the entire dataset at the root node.</li>
@@ -358,7 +448,7 @@ const Lab2 = () => {
             <img style={{width: '100%'}} src={Img6} alt="image6" /> <br /> <br />
           </ol> <br />
 
-          <h2>What is Pruning?</h2> <br />
+          <h3><strong onClick={() => handleHeadingClick("Step4")}>Step-4:Understanding Pruning?</strong></h3> <br />
           <p>Pruning in the context of decision trees refers to the process of reducing the size of the tree by removing specific parts of it. This technique aims to improve the tree's ability to generalize to new, unseen data while avoiding overfitting to the training data.</p> <br />
           <p>Pruning is necessary to prevent overfitting, where decision trees become overly complex and memorize noise or specifics of the training data, leading to poor performance on new data.
           We essentially prune by removing the nodes which have the least amount of information gain.
@@ -366,18 +456,35 @@ const Lab2 = () => {
           <img style={{width: '100%'}} src={Img7} alt="image7" /> <br /> <br />
           <img style={{width: '100%'}} src={Img8} alt="image8" /> <br /> <br />
 
-          <h3>Types of Pruning:</h3> <br />
+          <p> <b> Types of Pruning:</b></p> <br />
           <ul>
-            <li><strong>Cost Complexity Pruning (ccp): </strong> Pruning in the context of decision trees refers to the process of reducing the size of the tree by removing specific parts of it. <br /> <br /> This technique aims to improve the tree's ability to generalize to new, unseen data while avoiding overfitting to the training data.
+            <li><b>Cost Complexity Pruning (ccp): </b> Pruning in the context of decision trees refers to the process of reducing the size of the tree by removing specific parts of it. <br /> <br /> This technique aims to improve the tree's ability to generalize to new, unseen data while avoiding overfitting to the training data.
             Cost Complexity Pruning (ccp) balances tree complexity and training accuracy. Higher ccp_alpha values (𝛼) lead to more aggressive pruning, resulting in simpler trees with fewer nodes.</li> <br />
             <img style={{width: '100%'}} src={Img11} alt="image11" /> <br /> <br />
             <img style={{width: '100%'}} src={Img12} alt="image12" /> <br /> <br />
             <img style={{width: '100%'}} src={Img13} alt="image13" /> <br /> <br />
-            <li><strong>Pre-pruning:</strong> This involves setting stopping criteria before the tree is fully grown. It stops splitting nodes when further splitting does not lead to an improvement in model accuracy or when certain conditions are met.</li> <br />
+            <li><b>Pre-pruning:</b> This involves setting stopping criteria before the tree is fully grown. It stops splitting nodes when further splitting does not lead to an improvement in model accuracy or when certain conditions are met.</li> <br />
             <img style={{width: '100%'}} src={Img14} alt="image14" /> <br /> <br />
-            <li><strong>Post-Pruning (Reduced Error Pruning):</strong> This technique involves growing the decision tree to its maximum size (fully grown) and then pruning back the nodes that do not provide significant improvements to the model's accuracy or validation performance.</li> <br />
+            <li><b>Post-Pruning (Reduced Error Pruning):</b> This technique involves growing the decision tree to its maximum size (fully grown) and then pruning back the nodes that do not provide significant improvements to the model's accuracy or validation performance.</li> <br />
             <img style={{width: '100%'}} src={Img15} alt="image15" /> <br /> <br />
           </ul>
+
+          <h3><strong onClick={() => handleHeadingClick("Step5")}>Step-5:Reading and evaluating the tree</strong></h3> <br />
+          <img style={{width: '100%'}} src={Img9} alt="image9" /> <br /> <br />
+          <p>This is a representation of the decision rules the model has made. This allows us to easily see 
+              how the algorithm make each decision. Its just a representation of a decision tree in a easier to 
+              read format as decision trees can become very complicated to pictorially represent and read.</p>
+          <p>How to read:</p>
+          <ul>
+            <li>Each line represents a decision node in the tree. It specifies a condition based on a 
+            feature.</li>
+            <li>Indentation indicates the level of the node in the tree. More indentation means the node 
+            is deeper in the tree.</li>
+            <li>The condition (e.g., depth {"<"}= 50) is evaluated for each data point. If true, follow the 
+                branch; if false, go to the next condition.
+                </li>
+          </ul>
+
       </div>
         <div className="box4">
           <div className="code-container">

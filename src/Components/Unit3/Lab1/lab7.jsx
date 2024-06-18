@@ -7,6 +7,7 @@ import Img1 from './imgs/image1.png';
 import Img2 from './imgs/image2.png';
 import Img3 from './imgs/image3.png';
 import Img4 from './imgs/image4.png';
+import Img5 from './imgs/image5.png';
 import './lab7.css';
 
 hljs.registerLanguage('python', python);
@@ -330,6 +331,7 @@ const Lab2 = () => {
           <li><b>Cosine Similarity: </b> Cosine similarity measures the similarity between two vectors by comparing the angle between them. It is often used for image classification by comparing the feature vectors of images to determine how similar they are.</li>
           <img style={{width: '100%'}} src={Img3} alt="image3" /> <br /> <br />
           <img style={{width: '100%'}} src={Img4} alt="image4" /> <br /> <br />
+          <img style={{width: '100%'}} src={Img5} alt="image5" /> <br /> <br />
         </ul>
       </div>
 
