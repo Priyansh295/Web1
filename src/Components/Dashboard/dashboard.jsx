@@ -1,6 +1,6 @@
 import React from 'react';
 import './dashboard.css';
-
+import './vscode-theme.css'
 function Dashboard() {
   return (
     <div className="dashboard">

@@ -6,7 +6,6 @@ body {
   }
   
   .dashboard {
-    background: linear-gradient(135deg, #512222 0%, #512222 60%, #1a1b1a 60%, #1a1b1a 100%);
     color: #fff; /* Set text color to a suitable contrast against the background */
     padding: 20px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -18,7 +17,7 @@ body {
   }
   
   .head {
-    color: #141414; /* Text color for the header */
+    color: #f4f4f4; /* Text color for the header */
     font-size: 50px;
   }
   

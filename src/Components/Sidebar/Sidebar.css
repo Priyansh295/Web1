@@ -9,8 +9,8 @@
 }
 
 :root {
-    --body-color: #512222;
-    --sidebar-color: #2f3130;
+    --body-color: #0d111c;
+    --sidebar-color: #0d1117;
     --primary-color: #1C82AD;
     --primary-color-light: #F6F5FF;
     --toggle-color: #DDD;
@@ -31,18 +31,11 @@ body {
     background-color: var(--primary-color);
     color: #fff;
 }
-.sidebar svg{
+
+.sidebar svg {
     width: 20px;
     height: 20px;
     color: #752e2e;
-}
-body.dark {
-    --body-color: #512222;
-    --sidebar-color: #242526;
-    --primary-color: #000000;
-    --primary-color-light: #080808;
-    --toggle-color: #fff;
-    --text-color: #ffffff;
 }
 
 /* ===== Sidebar ===== */
@@ -56,6 +49,7 @@ body.dark {
     background: var(--sidebar-color);
     transition: var(--tran-05);
     z-index: 0;
+    border-right: 1px solid #fff; /* Add a thin white border only on the right side */
 }
 
 /* ===== Reusable code - Here ===== */
@@ -91,6 +85,8 @@ body.dark {
 .sidebar header .image-text {
     display: flex;
     align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #fff;
 }
 
 .sidebar header .logo-text {
@@ -102,7 +98,7 @@ header .image-text .name,
 header .image-text .profession {
     font-size: 18px;
     font-weight: 600;
-    margin-left: 40px;
+    margin-left: 20px;
 }
 
 .sidebar .menu {
@@ -131,8 +127,6 @@ header .image-text .profession {
     color: var(--sidebar-color);
 }
 
-
-
 .sidebar .menu-bar {
     height: calc(100% - 55px);
     display: flex;
@@ -151,6 +145,7 @@ header .image-text .profession {
     position: relative;
     transition: var(--tran-05);
 }
+
 
 .menu-bar .bottom-content .toggle-switch {
     position: absolute;
@@ -188,4 +183,44 @@ header .image-text .profession {
 
 body.dark .switch::before {
     left: 20px;
+}
+
+.logout {
+    margin-bottom: 50px;
+}
+
+/* ===== Dropdown Menu ===== */
+.unit-link {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
+.submenu-links {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+}
+
+.submenu-links.show {
+    max-height: 500px; /* Arbitrary high value to ensure the content fits */
+    opacity: 1;
+}
+
+.submenu-links li {
+    margin-top: 5px;
+}
+
+.submenu-links li a {
+    padding-left: 10px;
+}
+
+.dropdown-icon {
+    transition: transform 0.3s ease;
+}
+
+.dropdown-icon.open {
+    transform: rotate(180deg);
 }

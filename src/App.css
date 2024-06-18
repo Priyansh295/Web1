@@ -7,8 +7,8 @@
 .content-container {
   flex-grow: 1;
   overflow-y: auto;
-  padding-top: 64px; /* Adjust according to the height of your topbar */
-  padding-left: 250px; /* Adjust according to the width of your sidebar */
+  padding-top: 64px;
+  padding-left: 250px; 
 }
 
 /* Ensure sidebar remains on top */
@@ -35,3 +35,5 @@
   box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.05);
   z-index: 1000; /* Ensure topbar is on top */
 }
+
+

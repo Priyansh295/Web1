@@ -6,7 +6,9 @@
     height: 100%;
     z-index: 1;
 }
-
+.snippet{
+    background-color: yellow;
+}
 
 .tabs {
     display: flex;
@@ -43,7 +45,7 @@
 }
 
 .dashboard {
-    background: linear-gradient(135deg, #0a0e28 0%, #030310 20%, #1a1b1a 80%, #1a1b1a 100%);
+    
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -59,13 +61,27 @@
 
 .box3, .box4 {
     background-color: #2f3130;
-    width: 500px;
+    width: 650px;
     margin-right: 10px;
     border-radius: 10px;
     box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
     margin-bottom: 50px;
 }
 
+strong:hover{
+    color: orangered;
+    cursor: pointer;
+    transition: color 0.5s;
+}
+
+.highlighted {
+    background-color: yellow;
+}
+
+.img{
+    width: 5px;
+    height: 15px;
+}
 .box1 {
     width: 90%;
     height: 400px;
@@ -92,6 +108,60 @@
     overflow: auto;
     padding: 20px;
 }
+.highlighted {
+    background-color: yellow;
+    color: black;
+}
+
+.box4::highlight(search){
+    background-color: yellow;
+    color: black;
+}
+
+.box3,
+.box4 {
+    height: 810px;
+    margin-left: 50px;
+    scrollbar-width: thin; 
+    scrollbar-color: #555 #2f3130; 
+}
+
+.box3::-webkit-scrollbar,
+.box4::-webkit-scrollbar {
+    width: 4px;
+}
+
+.box3::-webkit-scrollbar-thumb,
+.box4::-webkit-scrollbar-thumb {
+    background-color: #555; 
+    border-radius: 4px; 
+}
+
+.box3::-webkit-scrollbar-thumb:hover,
+.box4::-webkit-scrollbar-thumb:hover {
+    background-color: #c23a3a; /* Color of the scrollbar thumb on hover */
+}
+
+.box3::-webkit-scrollbar-track,
+.box4::-webkit-scrollbar-track {
+    background-color: #2f3130; /* Color of the scrollbar track */
+}
+
+.box3::-webkit-scrollbar-corner,
+.box4::-webkit-scrollbar-corner {
+    background-color: transparent; /* Hide the scrollbar corner */
+}
+
+.button{
+    background-color: #2f3130;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+}
+
+.button a{
+    color: #fff;
+}
 
 .code-container {
     height: 100%;
@@ -107,6 +177,23 @@
     color: #2f3130;
     font-family: 'Courier New', Courier, monospace;
     white-space: pre;
+}
+
+.upload-container {
+    position: relative;
+    display: inline-block;
+}
+
+.upload-container img {
+    display: block;
+}
+
+.upload-container svg {
+    position: absolute;
+    top: 0;
+    right: 0;
+    cursor: pointer;
+    z-index: 1; /* Ensure the SVG is above the image */
 }
 
 

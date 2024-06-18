@@ -1,4 +1,4 @@
-import React, { useState , useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './style.css';
 
@@ -32,8 +32,8 @@ function Login({ onLogin }) {
       // Handle network or server error
       console.error('Error during login:', error);
     }
-
   };
+
   useEffect(() => {
     const signInBtnLink = document.querySelector('.signInBtn-link');
     const signUpBtnLink = document.querySelector('.signUpBtn-link');
@@ -52,84 +52,84 @@ function Login({ onLogin }) {
       signInBtnLink.removeEventListener('click', toggleActiveClass);
     };
   }, []);
-  return (
-    <div className="container">
-        <h1 className='welcome'>Welcome To <br/> Student Portal</h1>
-    <div className="wrapper login-page">
-      <div className="form-wrapper sign-in">
-        <form onSubmit={handleSubmit}>
-          <h2 className='head2'>Login</h2>
-          <div className="input-group">
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-            <label htmlFor="">Username</label>
-          </div>
-          <div className="input-group">
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <label htmlFor="">Password</label>
-          </div>
-          <div className="remember">
-            <label>
-              <input type="checkbox" /> Remember me
-            </label>
-          </div>
-          <button className="buttons" type="submit">
-            Login
-          </button>
-          <div className="signUp-link">
-            <p>
-              Don't have an account?{' '}
-              <a href="#" className="signUpBtn-link">
-                Sign Up
-              </a>
-            </p>
-          </div>
-        </form>
-      </div>
-      <div className="form-wrapper sign-up">
-        <form action="">
-          <h2 className='head2'>Sign Up</h2>
-          <div className="input-group">
-            <input type="text" required />
-            <label htmlFor="">Username</label>
-          </div>
-          <div className="input-group">
-            <input type="email" required />
-            <label htmlFor="">Email</label>
-          </div>
-          <div className="input-group">
-            <input type="password" required />
-            <label htmlFor="">Password</label>
-          </div>
-          <div className="remember">
-            <label>
-              <input type="checkbox" /> I agree to the terms & conditions
-            </label>
-          </div>
-          <button className="buttons" type="submit">
-            Sign Up
-          </button>
 
-          <div className="signUp-link">
-            <p>
-              Already have an account?{' '}
-              <a href="#" className="signInBtn-link">
-                Sign In
-              </a>
-            </p>
-          </div>
-        </form>
+  return (
+    <div className="container" style={{backgroundColor: 'black'}}>
+      <h1 className='welcome'>Welcome To <br/> Lab Manual Portal</h1>
+      <div className="wrapper login-page">
+        <div className="form-wrapper sign-in">
+          <form onSubmit={handleSubmit}>
+            <h2 className='head2'>Login</h2>
+            <div className="input-group">
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+              <label htmlFor="">Username</label>
+            </div>
+            <div className="input-group">
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <label htmlFor="">Password</label>
+            </div>
+            <div className="remember">
+              <label>
+                <input type="checkbox" /> Remember me
+              </label>
+            </div>
+            <button className="buttons" type="submit">
+              Login
+            </button>
+            <div className="signUp-link">
+              <p>
+                Don't have an account?{' '}
+                <a href="#" className="signUpBtn-link">
+                  Sign Up
+                </a>
+              </p>
+            </div>
+          </form>
+        </div>
+        <div className="form-wrapper sign-up">
+          <form action="">
+            <h2 className='head2'>Sign Up</h2>
+            <div className="input-group">
+              <input type="text" required />
+              <label htmlFor="">Username</label>
+            </div>
+            <div className="input-group">
+              <input type="email" required />
+              <label htmlFor="">Email</label>
+            </div>
+            <div className="input-group">
+              <input type="password" required />
+              <label htmlFor="">Password</label>
+            </div>
+            <div className="remember">
+              <label>
+                <input type="checkbox" /> I agree to the terms & conditions
+              </label>
+            </div>
+            <button className="buttons" type="submit">
+              Sign Up
+            </button>
+            <div className="signUp-link">
+              <p>
+                Already have an account?{' '}
+                <a href="#" className="signInBtn-link">
+                  Sign In
+                </a>
+              </p>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
     </div>
   );
 }

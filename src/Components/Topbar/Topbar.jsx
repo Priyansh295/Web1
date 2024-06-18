@@ -8,11 +8,12 @@ const Topbar = ({ onLogout }) => {
   return (
     <Box
       style={{
-        background: 'linear-gradient(135deg, #512222 0%, #512222 98%, #1a1b1a 2%, #1a1b1a 100%)',
+        backgroundColor: '#0d111c',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: '10px 20px', // Add some padding for better layout
+        padding: '10px 20px',
+        borderBottom: '1px solid #fff'
       }}
     >
       <Box flex="1" display="flex" justifyContent="center">
