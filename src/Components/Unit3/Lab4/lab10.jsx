@@ -289,28 +289,6 @@ plot_tree(optimal_clf, filled=True, feature_names=['depth', 'precision'
 plt.show()
 
 `,
-  DeepLearningModel: `
-  from tensorflow.keras.models import Sequential
-  from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Dropout
-
-model = Sequential([
-    Conv2D(filters=32, kernel_size=3, strides=(1,1), padding='valid', activation='relu', input_shape=(28, 28, 1)),
-    MaxPooling2D(pool_size=(2,2)),
-    Conv2D(filters=64, kernel_size=3, strides=(2,2), padding='same', activation='relu'),
-    MaxPooling2D(pool_size=(2,2)),
-    Flatten(),
-    Dense(128, activation='relu'),
-    Dropout(0.25),
-    Dense(256, activation='relu'),
-    Dropout(0.25),
-    Dense(128, activation='relu'),
-    Dense(10, activation='softmax')  
-])
-
-model.compile(optimizer='adam', 
-                loss=tf.keras.losses.SparseCategoricalCrossentropy(),  # Use SparseCategoricalCrossentropy for multi-class classification
-                metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
-`,
 
   TrainModel: `
   model.fit(x_train, y_train, epochs=20, batch_size=16, verbose=1, validation_data=(x_val, y_val))
@@ -437,13 +415,13 @@ const Lab2 = () => {
           <h3> <strong onClick={() => handleHeadingClick("Step3")}>Step-3:Building a Decision Tree Built?</strong></h3> <br />
           <p>When using scikit-learn to build a decision tree for classification, the algorithm splits the data at each node in a way that maximizes the "purity" of the resulting subsets. Gini impurity is one of the metrics used to measure this purity.</p> <br />
           <ol>
-            <li><strong>Initialize the Root Node:</strong> The process starts with the entire dataset at the root node.</li>
-            <li><strong>Calculate Gini Impurity:</strong> For each possible split, calculate the Gini impurity of the subsets resulting from the split.</li> <br />
+            <li><b>Initialize the Root Node:</b> The process starts with the entire dataset at the root node.</li>
+            <li><b>Calculate Gini Impurity:</b> For each possible split, calculate the Gini impurity of the subsets resulting from the split.</li> <br />
             <img style={{width: '100%'}} src={Img3} alt="image3" /> <br /> <br />
-            <li><strong>Evaluate Splits:</strong> Divide the dataset based on each feature and split value, calculating the weighted Gini impurity.</li>
-            <li><strong>Choose the Best Split:</strong> The algorithm selects the split that results in the lowest weighted Gini impurity and uses this as the decision rule at the current node.</li>
-            <li><strong>Repeat for Child Nodes:</strong> Continue recursively until a stopping criterion is met (maximum depth, minimum samples, node purity).</li>
-            <li><strong>Final Tree Structure:</strong> The result is a tree structure where each internal node represents a decision based on a feature and a split value, and each leaf node represents a class label (for classification tasks).</li> <br />
+            <li><b>Evaluate Splits:</b> Divide the dataset based on each feature and split value, calculating the weighted Gini impurity.</li>
+            <li><b>Choose the Best Split:</b> The algorithm selects the split that results in the lowest weighted Gini impurity and uses this as the decision rule at the current node.</li>
+            <li><b>Repeat for Child Nodes:</b> Continue recursively until a stopping criterion is met (maximum depth, minimum samples, node purity).</li>
+            <li><b>Final Tree Structure:</b> The result is a tree structure where each internal node represents a decision based on a feature and a split value, and each leaf node represents a class label (for classification tasks).</li> <br />
             <img style={{width: '100%'}} src={Img4} alt="image4" /> <br /> <br />
             <img style={{width: '100%'}} src={Img5} alt="image5" /> <br /> <br />
             <img style={{width: '100%'}} src={Img6} alt="image6" /> <br /> <br />
