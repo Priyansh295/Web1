@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import hljs from 'highlight.js/lib/core';
 import python from 'highlight.js/lib/languages/python';
 import 'highlight.js/styles/github.css';
-import 'ace-builds/webpack-resolver'; 
+import 'ace-builds/webpack-resolver';
 import Img1 from './imgs/image1.gif';
 import Img2 from './imgs/image2.jpg';
 import Img3 from './imgs/image3.gif';
@@ -576,12 +576,12 @@ const Lab2 = () => {
 
   const ParticleCanvas = () => {
     const canvasRef = useRef(null);
-  
+
     useEffect(() => {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
       let particles = [];
-  
+
       // Function to create a particle
       function Particle(x, y) {
         this.x = x;
@@ -590,35 +590,35 @@ const Lab2 = () => {
         this.speedX = Math.random() * 3 - 1.5;
         this.speedY = Math.random() * 3 - 1.5;
       }
-  
+
       // Function to draw particles and connect them with lines
       function drawParticles() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
+
         for (let i = 0; i < particles.length; i++) {
           ctx.fillStyle = 'orangered'; // Change particle color to orangered
           ctx.beginPath();
           ctx.arc(particles[i].x, particles[i].y, particles[i].size, 0, Math.PI * 2);
           ctx.fill();
-  
+
           particles[i].x += particles[i].speedX;
           particles[i].y += particles[i].speedY;
-  
+
           // Wrap particles around the screen
           if (particles[i].x > canvas.width) particles[i].x = 0;
           if (particles[i].x < 0) particles[i].x = canvas.width;
           if (particles[i].y > canvas.height) particles[i].y = 0;
           if (particles[i].y < 0) particles[i].y = canvas.height;
-  
+
           // Draw lines between neighboring particles
           for (let j = i + 1; j < particles.length; j++) {
             const dx = particles[i].x - particles[j].x;
             const dy = particles[i].y - particles[j].y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             const opacity = 1 - distance / 100; // Opacity based on distance
-  
+
             if (opacity > 0) {
               ctx.strokeStyle = `rgba(0, 0, 0, ${opacity})`; // Set line opacity
               ctx.lineWidth = 0.5; // Set line thickness
@@ -629,21 +629,21 @@ const Lab2 = () => {
             }
           }
         }
-  
+
         requestAnimationFrame(drawParticles);
       }
-  
+
       for (let i = 0; i < 120; i++) {
         particles.push(new Particle(Math.random() * canvas.width, Math.random() * canvas.height));
       }
-  
+
       drawParticles();
-  
+
       return () => {
         particles = [];
       };
     }, []);
-  
+
     return <canvas ref={canvasRef} style={{ position: 'fixed', zIndex: -1, top: 0, left: 0, width: '100vw', height: '100vh' }} />;
   };
 
@@ -656,68 +656,68 @@ const Lab2 = () => {
     <div className="dashboard">
       <ParticleCanvas />
       <div className="Layout" style={{ display: "flex", justifyContent: "space-around", color: '#09F' }}>
-      <div className="box3">
-      <h2>Machine Learning Model Theories Explained</h2> <br />
+        <div className="box3">
+          <h2>Machine Learning Model Theories Explained</h2> <br />
 
-      <p><strong onClick={() => handleHeadingClick("logisticRegression")}>Logistic Regression:</strong></p> <br />
-      <ol>
-          <li><b>Purpose:</b>  Logistic regression is used to classify things into one of two groups.</li> <br />
-          <li><b>How it works:</b> 
+          <p><strong onClick={() => handleHeadingClick("logisticRegression")}>Logistic Regression:</strong></p> <br />
+          <ol>
+            <li><b>Purpose:</b>  Logistic regression is used to classify things into one of two groups.</li> <br />
+            <li><b>How it works:</b>
               <ul>
                 <li><b>input:</b> Takes various features (input variables).</li>
                 <li><b>Output:</b> Predicts the probability that an instance belongs to a certain class (between 0 and 1).</li>
                 <li><b>Function:</b> Uses a special function called the logistic (or sigmoid) function to convert inputs into a probability.</li>
               </ul>
-          </li>
-          <li><b>Key Points:</b>
-            <ul>
-              <li>Uses examples with known outcomes to learn from.</li>
-              <li>It is a linear model, meaning the relationship between the input features and the output is linear</li>
-            </ul>
-          </li>
-      </ol> <br />
-      <img style={{width: '100%'}} src={Img2} alt="image2" /> <br /> <br />
-      <img style={{width: '100%'}} src={Img3} alt="image3" /> <br /> <br />
-      <img style={{width: '100%'}} src={Img6} alt="image6" /> <br /> <br />
+            </li>
+            <li><b>Key Points:</b>
+              <ul>
+                <li>Uses examples with known outcomes to learn from.</li>
+                <li>It is a linear model, meaning the relationship between the input features and the output is linear</li>
+              </ul>
+            </li>
+          </ol> <br />
+          <img style={{ width: '100%' }} src={Img2} alt="image2" /> <br /> <br />
+          <img style={{ width: '100%' }} src={Img3} alt="image3" /> <br /> <br />
+          <img style={{ width: '100%' }} src={Img6} alt="image6" /> <br /> <br />
 
-      <p><strong onClick={() => handleHeadingClick("randomForest")}>Random Forest:</strong></p> <br />
-      <ol>
-        <li><b>Purpose:</b> Random Forest is used for both classification (grouping things) and regression (predicting numbers).</li> <br />
-        <li><b>How it works:</b>
-          <ul>
-            <li><b>Trees:</b> Builds many decision trees to make predictions.</li>
-            <li><b>Combination:</b> Combines results from all trees for a final prediction.</li>
-            <li><b>Classification:</b>  For classification, it chooses the most common class from all trees.</li>
-            <li><b>Regression:</b> For regression, it takes the average prediction from all trees.</li>
-          </ul>
-        </li> <br />
-        <li><b>Key Points:</b>
-          <ul>
-            <li> Each tree is trained on a random subset of the data and uses a random subset of features.</li>
-            <li> Makes the model less likely to overfit and better at handling complex data. Hence provides beter accuracy</li>
-          </ul>
-        </li>
-      </ol>
-      <img style={{width: '100%'}} src={Img1} alt="image1" /> <br /> <br />
-      <img style={{width: '100%'}} src={Img4} alt="imag41" /> <br /> <br />
-      <img style={{width: '100%'}} src={Img5} alt="image5" /> <br /> <br />
-    </div>
+          <p><strong onClick={() => handleHeadingClick("randomForest")}>Random Forest:</strong></p> <br />
+          <ol>
+            <li><b>Purpose:</b> Random Forest is used for both classification (grouping things) and regression (predicting numbers).</li> <br />
+            <li><b>How it works:</b>
+              <ul>
+                <li><b>Trees:</b> Builds many decision trees to make predictions.</li>
+                <li><b>Combination:</b> Combines results from all trees for a final prediction.</li>
+                <li><b>Classification:</b>  For classification, it chooses the most common class from all trees.</li>
+                <li><b>Regression:</b> For regression, it takes the average prediction from all trees.</li>
+              </ul>
+            </li> <br />
+            <li><b>Key Points:</b>
+              <ul>
+                <li> Each tree is trained on a random subset of the data and uses a random subset of features.</li>
+                <li> Makes the model less likely to overfit and better at handling complex data. Hence provides beter accuracy</li>
+              </ul>
+            </li>
+          </ol>
+          <img style={{ width: '100%' }} src={Img1} alt="image1" /> <br /> <br />
+          <img style={{ width: '100%' }} src={Img4} alt="imag41" /> <br /> <br />
+          <img style={{ width: '100%' }} src={Img5} alt="image5" /> <br /> <br />
+        </div>
         <div className="box4">
           <div className="code-container">
             <pre className="code-snippet">
               <code className="python" >
-              {highlightedCodeSnippet ? highlightedCodeSnippet.trim() : codeSnippet2.trim()}
+                {highlightedCodeSnippet ? highlightedCodeSnippet.trim() : codeSnippet2.trim()}
               </code>
             </pre>
           </div>
         </div>
       </div>
-      <div> 
-          <button className="button">
-          <a href="https://www.kaggle.com/code/priyansh2904/lab6new?scriptVersionId=182578390" target="_blank"> View Runable code</a>
-          </button>
-        </div>
+      <div>
+        <button className="button">
+          <a href="https://www.kaggle.com/code/pushkarns/lab6new" target="_blank"> View Runable code</a>
+        </button>
       </div>
+    </div>
   );
 };
 export default Lab2;
