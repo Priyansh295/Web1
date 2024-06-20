@@ -411,6 +411,7 @@ const Lab2 = () => {
       <ParticleCanvas />
       <div className="Layout" style={{ display: "flex", justifyContent: "space-around", color: '#09F' }}>
       <div className="box3">
+          <h2>Building a Supervised Learning Model to Predict Machining Quality based on Operational Parameters</h2> <br />
           <h3> <strong onClick={() => handleHeadingClick("Step1")}>Step-1: Understanding Decision Trees</strong></h3> <br />
           <p>A decision tree is a popular machine learning algorithm used for classification and regression tasks. It is a tree-like model of decisions and their possible consequences. Here’s a simple breakdown of how it works:</p> <br />
           <ul>

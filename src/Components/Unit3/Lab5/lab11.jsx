@@ -275,7 +275,8 @@ const Lab2 = () => {
       <ParticleCanvas />
       <div className="Layout" style={{ display: "flex", justifyContent: "space-around", color: '#09F' }}>
       <div className="box3">
-        <h2>DBSCAN: A Pictorial Representation and Explanation</h2> <br />
+        <h2>Implementation of an Unsupervised Algorithm to cluster machine sound for Anomaly Detection</h2> <br />
+        <h4>DBSCAN: A Pictorial Representation and Explanation</h4> <br />
 
         <p>DBSCAN (Density-Based Spatial Clustering of Applications with Noise) is a popular clustering algorithm that groups together points that are closely packed and marks points that lie alone in low-density regions as outliers.</p> <br />
         
