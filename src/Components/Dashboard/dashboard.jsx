@@ -1,24 +1,14 @@
 import React from 'react';
 import './dashboard.css';
-import './vscode-theme.css'
+import './vscode-theme.css';
+import Img1 from './imgs/mainpagelogo.png';
+
 function Dashboard() {
   return (
     <div className="dashboard">
-      <header>
-        <h1 className='head'>Contact Us</h1>
-      </header>
-
-      <section>
-        <p className='contact-content'>If you have any questions, feedback, or inquiries, please feel free to contact us using the information below:</p>
-        <address>
-          Email: info@college.edu<br />
-          Phone: (123) 456-7890
-        </address>
-      </section>
-
-      <footer>
-        <p className='contact-content'>We look forward to hearing from you!</p>
-      </footer>
+      <div className="image-container">
+      <img style={{width: '80%'}} src={Img1} alt="image1" /> <br /> <br />
+      </div>
     </div>
   );
 }
