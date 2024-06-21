@@ -224,6 +224,12 @@ plt.show()
 `;
 
 const codeSections = {
+  Step1: `
+  # Initialize the DecisionTreeClassifier
+  clf = DecisionTreeClassifier(random_state = 42, ccp_alpha = ccp_alpha)
+  clf.fit(X_train,y_train)
+  `,
+  
   Step2: `
 np.random.seed(42) # For reproducibility
 num_samples = 1000
@@ -288,12 +294,7 @@ plot_tree(optimal_clf, filled=True, feature_names=['depth', 'precision'
 , 'rate'], class_names=[str(i) for i in range(1, 6)])
 plt.show()
 
-`,
-
-  TrainModel: `
-  model.fit(x_train, y_train, epochs=20, batch_size=16, verbose=1, validation_data=(x_val, y_val))
-
-  `
+`
 };
 
 const Lab2 = () => {
