@@ -14,6 +14,12 @@ import Lab9 from './Components/Unit3/Lab3/lab9';
 import Lab10 from './Components/Unit3/Lab4/lab10';
 import Lab11 from './Components/Unit3/Lab5/lab11';
 import Lab12 from './Components/Unit3/Lab6/lab12';
+import Lab13 from './Components/Unit4/Lab1/lab13';
+import Lab14 from './Components/Unit4/Lab2/lab14';
+import Lab15 from './Components/Unit4/Lab3/lab15';
+import Lab16 from './Components/Unit4/Lab4/lab16';
+import Lab17 from './Components/Unit4/Lab5/lab17';
+import Lab18 from './Components/Unit4/Lab6/lab18';
 import Topbar from './Components/Topbar/Topbar';
 import Sidebar from './Components/Sidebar/Sidebar';
 import Dashboard from './Components/Dashboard/dashboard';
@@ -53,6 +59,12 @@ function App() {
                 <Route path="/lab10" element={<Lab10 />} />
                 <Route path="/lab11" element={<Lab11 />} />
                 <Route path="/lab12" element={<Lab12/>} />
+                <Route path="/lab13" element={<Lab13/>} />
+                <Route path="/lab14" element={<Lab14/>} />
+                <Route path="/lab15" element={<Lab15/>} />
+                <Route path="/lab16" element={<Lab16/>} />
+                <Route path="/lab17" element={<Lab17/>} />
+                <Route path="/lab18" element={<Lab18/>} />
               </Routes>
             </div>
           </>
