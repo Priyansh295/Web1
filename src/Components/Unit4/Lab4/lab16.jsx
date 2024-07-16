@@ -3,190 +3,188 @@ import hljs from 'highlight.js/lib/core';
 import python from 'highlight.js/lib/languages/python';
 import 'highlight.js/styles/github.css';
 import 'ace-builds/webpack-resolver'; 
-// import Img1 from './imgs/image1.png';
-// import Img2 from './imgs/image2.png';
-// import Img3 from './imgs/image3.png';
-// import Img4 from './imgs/image4.png';
-// import Img5 from './imgs/image5.png';
+import Img1 from './imgs/image1.png';
+import Img2 from './imgs/image2.png';
+import Img3 from './imgs/image3.png';
+import Img4 from './imgs/image4.png';
 import './lab16.css';
 
 hljs.registerLanguage('python', python);
 
 const codeSnippet2 = `
-# Install libraries if not already installed
-!pip install tensorflow scikit-learn
 
-# Import libraries
-import numpy as np
-import tensorflow as tf
-from tensorflow.keras.preprocessing.image import ImageDataGenerator, img_to_array, load_img
-from tensorflow.keras.applications import VGG16
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.cluster import KMeans
-from sklearn.metrics import classification_report
-import matplotlib.pyplot as plt
+!pip install spacy
+!python -m spacy download en_core_web_sm
+!pip install Flask
 
-# Define the path to your dataset
-dataset_path = '/kaggle/input/real-life-industrial-dataset-of-casting-product'
+import spacy
+from flask import Flask, request, jsonify
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.pipeline import make_pipeline
 
-# Load dataset (assuming data is organized in directories by class)
-datagen = ImageDataGenerator(rescale=1./255)
-dataset = datagen.flow_from_directory(dataset_path, target_size=(224, 224), batch_size=32, class_mode='binary')
+# Load the spaCy model
+nlp = spacy.load('en_core_web_sm')
 
-# Function to load and prepare the data
-def load_data(dataset):
-    features = []
-    labels = []
-    for batch in dataset:
-        X_batch, y_batch = batch
-        features.extend(X_batch)
-        labels.extend(y_batch)
-        if len(features) >= dataset.samples:
-            break
-    return np.array(features), np.array(labels)
+# Define the set of training data
+queries = [
+    "What are your business hours?",
+    "How do I reset my password?",
+    "Where is my order?",
+    "Can I return an item?",
+    "What is the status of my ticket?",
+    "How do I contact support?"
+]
 
-X, y = load_data(dataset)
+responses = [
+    "Our business hours are 9 AM to 5 PM, Monday to Friday.",
+    "To reset your password, click on 'Forgot Password' on the login page.",
+    "You can check your order status by logging into your account and visiting the 'Orders' section.",
+    "To return an item, please visit our returns page and follow the instructions.",
+    "Your ticket status can be checked in the 'Support' section after logging in.",
+    "You can contact support by emailing support@example.com or calling 123-456-7890."
+]
 
-# Split data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Create and train a simple model using scikit-learn
+model = make_pipeline(CountVectorizer(), MultinomialNB())
+model.fit(queries, responses)
 
-# Normalize and reshape the features
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train.reshape(-1, 224 * 224 * 3))
-X_test = scaler.transform(X_test.reshape(-1, 224 * 224 * 3))
+# Initialize Flask app
+app = Flask(__name__)
 
-# Load pre-trained VGG16 model for feature extraction
-base_model = VGG16(include_top=False, weights='imagenet', input_shape=(224, 224, 3))
-model = tf.keras.Model(inputs=base_model.input, outputs=base_model.get_layer('block5_pool').output)
+# Define the route for the chatbot
+@app.route('/chatbot', methods=['POST'])
+def chatbot():
+    # Get the user's query from the request
+    query = request.json.get('query')
 
-# Function to extract features
-def extract_features(model, data):
-    features = model.predict(data)
-    return features.reshape(features.shape[0], -1)
+    # Predict the response using the trained model
+    response = model.predict([query])[0]
 
-X_train_features = extract_features(model, X_train.reshape(-1, 224, 224, 3))
-X_test_features = extract_features(model, X_test.reshape(-1, 224, 224, 3))
+    # Return the response as JSON
+    return jsonify({"response": response})
 
-# Compute cosine similarity between test samples and train samples
-cos_sim = cosine_similarity(X_test_features, X_train_features)
-predicted_labels_cos_sim = y_train[np.argmax(cos_sim, axis=1)]
+# Function to run the app in a separate thread
+def run_app():
+    try:
+        app.run(debug=True, port=5002, use_reloader=False)
+    except Exception as e:
+        print(f"Error: {e}")
 
-# Evaluate the cosine similarity classification
-print("Cosine Similarity Classification Report")
-print(classification_report(y_test, predicted_labels_cos_sim))
+# Run the Flask app in a separate thread
+from threading import Thread
+flask_thread = Thread(target=run_app)
+flask_thread.start()
 
-# Function to preprocess the given image path
-def preprocess_image(image_path):
-    print(f"Preprocessing image: {image_path}")
-    img = load_img(image_path, target_size=(224, 224))
-    img_array = img_to_array(img) / 255.0
-    img_array = np.expand_dims(img_array, axis=0)
-    return img_array
+from threading import Thread
 
-# Function to extract features of the given image
-def extract_image_features(model, img_array):
-    print("Extracting image features")
-    features = model.predict(img_array)
-    return features.reshape(1, -1)
+def run_app():
+    app.run(debug=True, port=5002, use_reloader=False)
 
-# Function to classify the given image
-def classify_image(image_path, model, X_train_features, y_train):
-    img_array = preprocess_image(image_path)
-    img_features = extract_image_features(model, img_array)
-    cos_sim = cosine_similarity(img_features, X_train_features)
-    predicted_label = y_train[np.argmax(cos_sim, axis=1)]
-    return predicted_label[0]
+flask_thread = Thread(target=run_app)
+flask_thread.start()
 
-# Provide the path to the image you want to classify
-image_path = '/kaggle/input/testimage1/cast_def_0_138.jpeg'
+import requests
 
-# Classify the given image
-predicted_quality = classify_image(image_path, model, X_train_features, y_train)
-print(f"The predicted quality for the image is: {'High' if predicted_quality == 1 else 'Low'}")
+def get_chatbot_response(query):
+    # Define the URL for the chatbot
+    url = "http://127.0.0.1:5002/chatbot"
 
-# Display the given image
-img = load_img(image_path)
-plt.imshow(img)
-plt.axis('off')
-plt.show()
+    # Send the POST request with the user query
+    response = requests.post(url, json={"query": query})
+
+    # Get the JSON response and extract the message
+    return response.json().get("response")
+
+# Function to test chatbot with a given query
+def test_chatbot(query):
+    # Get the chatbot response
+    response = get_chatbot_response(query)
+
+    # Print the response
+    print("User query:", query)
+    print("Chatbot response:", response)
+
+# Example query for testing
+test_query = "What are your business hours?"
+test_chatbot(test_query)
+
+test_chatbot("How do I reset my password?")
+test_chatbot("Where is my order?")
 `;
 
 const codeSections = {
-  Step1: `
-# Install libraries if not already installed
+  SpaCy: `
+import spacy
+from flask import Flask, request, jsonify
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.pipeline import make_pipeline
 
+# Load the spaCy model
+nlp = spacy.load('en_core_web_sm')
 
-!pip install tensorflow scikit-learn
+# Define the set of training data
+queries = [
+    "What are your business hours?",
+    "How do I reset my password?",
+    "Where is my order?",
+    "Can I return an item?",
+    "What is the status of my ticket?",
+    "How do I contact support?"
+]
+
+responses = [
+    "Our business hours are 9 AM to 5 PM, Monday to Friday.",
+    "To reset your password, click on 'Forgot Password' on the login page.",
+    "You can check your order status by logging into your account and visiting the 'Orders' section.",
+    "To return an item, please visit our returns page and follow the instructions.",
+    "Your ticket status can be checked in the 'Support' section after logging in.",
+    "You can contact support by emailing support@example.com or calling 123-456-7890."
+]
+
+# Create and train a simple model using scikit-learn
+model = make_pipeline(CountVectorizer(), MultinomialNB())
+model.fit(queries, responses)
 `,
-  ImportLibs: `
-import numpy as np
-import tensorflow as tf
-from tensorflow.keras.preprocessing.image import ImageDataGenerator, img_to_array, load_img
-from tensorflow.keras.applications import VGG16
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.cluster import KMeans
-from sklearn.metrics import classification_report
-import matplotlib.pyplot as plt
-`,
-  DefinePath: `
-  dataset_path = '/kaggle/input/real-life-industrial-dataset-of-casting-product'
-`,
+  Flask: `
+app = Flask(__name__)
 
-  LoadDataset: `
-  datagen = ImageDataGenerator(rescale=1./255)
-  dataset = datagen.flow_from_directory(dataset_path, target_size=(224, 224), batch_size=32, class_mode='binary')
-  `,
-  LoadPrepData: `
-  X, y = load_data(dataset)
-  `,
-  SplitData: `
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-  `,
-  NormaliseReshape: `
-  scaler = StandardScaler()
-  X_train = scaler.fit_transform(X_train.reshape(-1, 224 * 224 * 3))
-  X_test = scaler.transform(X_test.reshape(-1, 224 * 224 * 3))
-  `,
-  LoadVGG16: `
-  base_model = VGG16(include_top=False, weights='imagenet', input_shape=(224, 224, 3))
-  model = tf.keras.Model(inputs=base_model.input, outputs=base_model.get_layer('block5_pool').output)
-  `,
-  ExtractFeatures:`
-  X_train_features = extract_features(model, X_train.reshape(-1, 224, 224, 3))
-  X_test_features = extract_features(model, X_test.reshape(-1, 224, 224, 3))
-  `,
-  ComputeCosSim: `
-  cos_sim = cosine_similarity(X_test_features, X_train_features)
-  predicted_labels_cos_sim = y_train[np.argmax(cos_sim, axis=1)]
-  `,
-  EvaluateClass: `
-  print("Cosine Similarity Classification Report")
-  print(classification_report(y_test, predicted_labels_cos_sim))
-  `,
-  PreprocessingImage: `
-  def preprocess_image(image_path):
-    print(f"Preprocessing image: {image_path}")
-    img = load_img(image_path, target_size=(224, 224))
-    img_array = img_to_array(img) / 255.0
-    img_array = np.expand_dims(img_array, axis=0)
-    return img_array
+# Define the route for the chatbot
+@app.route('/chatbot', methods=['POST'])
+def chatbot():
+    # Get the user's query from the request
+    query = request.json.get('query')
+    
+    # Predict the response using the trained model
+    response = model.predict([query])[0]
 
-  def extract_image_features(model, img_array):
-      print("Extracting image features")
-      features = model.predict(img_array)
-      return features.reshape(1, -1)
-  `,
-  ClassifyImage: `
-  image_path = '/kaggle/input/testimage1/cast_def_0_138.jpeg'
-  predicted_quality = classify_image(image_path, model, X_train_features, y_train)
-  print(f"The predicted quality for the image is: {'High' if predicted_quality == 1 else 'Low'}")
-  `
+    # Return the response as JSON
+    return jsonify({"response": response})
+# Function to run the app in a separate thread
+def run_app():
+    try:
+        app.run(debug=True, port=5002, use_reloader=False)
+    except Exception as e:
+        print(f"Error: {e}")
+
+# Run the Flask app in a separate thread
+from threading import Thread
+flask_thread = Thread(target=run_app)
+flask_thread.start()
+
+`,
+  RESTful: `
+  def get_chatbot_response(query):
+    # Define the URL for the chatbot
+    url = "http://127.0.0.1:5002/chatbot"
+    
+    # Send the POST request with the user query
+    response = requests.post(url, json={"query": query})
+    
+    # Get the JSON response and extract the message
+    return response.json().get("response")
+`
 };
 
 const Lab2 = () => {
@@ -282,56 +280,75 @@ const Lab2 = () => {
       <ParticleCanvas />
       <div className="Layout" style={{ display: "flex", justifyContent: "space-around", color: '#09F' }}>
       <div className="box3">
-        <h2>Image Classification Using Pre-trained VGG16 and Cosine Similarity</h2> <br />
+    <h2>Chatbot Using NLP Techniques for Customer Service or Operational Queries</h2> <br />
 
-        <p><strong onClick={() => handleHeadingClick("Step1")}>1. Installing Libraries</strong></p>
-        <p>The code starts by ensuring that all the necessary libraries, such as TensorFlow and scikit-learn, are installed to enable machine learning functionalities.</p> <br />
+    <p><b>Overview of spaCy</b></p>
+    <p>spaCy is a robust library for Natural Language Processing (NLP) in Python. It is designed for high performance and large-scale text processing. The library is well-suited for real-world applications, providing tools for diverse NLP tasks.</p> <br />
 
-        <p><strong onClick={() => handleHeadingClick("ImportLibs")}>2. Importing Libraries</strong></p>
-        <p>Essential libraries like NumPy for handling data, TensorFlow for machine learning, and various scikit-learn modules for preprocessing and model evaluation are imported.</p> <br />
+    <p><b>Overview of Flask</b></p>
+    <p>Flask is a minimalistic and flexible web framework for Python developers. It's easy to start with Flask for small projects and can also be expanded with various extensions for building complex applications.</p> <br />
 
-        <p><strong onClick={() => handleHeadingClick("DefinePath")}>3. Defining Dataset Path</strong></p>
-        <p>The path where the dataset is stored is defined, guiding the code to locate and process the dataset correctly.</p> <br />
+    <p><b>Overview of RESTful APIs</b></p>
+    <p>RESTful API is a design pattern for APIs. It stands for Representational State Transfer and uses HTTP methods for web services. It's widely adopted due to its simplicity and effectiveness in allowing various applications to communicate over the internet.</p> <br />
 
-        <p><strong onClick={() => handleHeadingClick("LoadDataset")}>4. Loading Dataset</strong></p>
-        <p>The dataset is loaded and prepared using TensorFlow's ImageDataGenerator, which also handles the image resizing and normalization.</p> <br />
+    <p><h3><strong  onClick={() => handleHeadingClick("SpaCy")}>Spacy</strong></h3></p>
+    <p><b>Key Features of spaCy</b></p>
+    <ul>
+        <li>Tokenization: Splits text into individual words and punctuation.</li>
+        <li>Part-of-Speech Tagging: Identifies parts of speech for each word, like nouns and verbs.</li>
+        <li>Named Entity Recognition (NER): Recognizes and classifies names, dates, and companies within text.</li>
+        <li>Dependency Parsing: Establishes relationships between words, showing how sentences are structured.</li>
+        <li>Text Classification: Trains models to categorize text into predefined labels.</li>
+        <li>Pre-trained Models: Offers models trained on large datasets, ready to use for various languages.</li>
+        <li>Customization: Allows customization of models for specific tasks and datasets.</li>
+    </ul> <br />
+    <img style={{width: '100%'}} src={Img1} alt="image1" /> <br /> <br />
 
-        <p><strong onClick={() => handleHeadingClick("LoadPrepData")}>5. Loading and Preparing Data</strong></p>
-        <p>A function is set up to load the data, extract images and labels, and ensure that all the data needed for training and testing is ready and accessible.</p> <br />
+    <p><h3><strong onClick={() => handleHeadingClick("Flask")}>Flask</strong></h3></p>
+    <p><b>Key Features of Flask</b></p>
+    <ul>
+        <li>Micro-framework: Provides core functionality with options to include additional features as needed.</li>
+        <li>Routing: Maps URLs to Python function handlers, making URL management easy.</li>
+        <li>Templates: Integrates with Jinja2 for dynamic HTML rendering.</li>
+        <li>Request Handling: Simplifies the management of incoming data and responses.</li>
+        <li>Development Server: Includes a server for local testing and development.</li>
+        <li>Extensions: Supports a wide range of plugins for added functionalities like ORM, form validation, and more.</li>
+        <li>RESTful Support: Well-suited for creating APIs that can handle RESTful requests.</li>
+    </ul> <br />
+    <img style={{width: '100%'}} src={Img2} alt="image2" /> <br /> <br />
 
-        <p><strong onClick={() => handleHeadingClick("SplitData")}>6. Splitting Data into Training and Testing Sets</strong></p>
-        <p>The data is divided into training and testing sets to provide a robust evaluation of the model's performance, maintaining an unbiased approach towards model validation.</p> <br />
+    <p><h3><strong onClick={() => handleHeadingClick("RESTful")}>RESTful API</strong></h3></p>
+    <p><b>Key Characteristics of RESTful APIs</b></p>
+    <ul>
+        <li>Stateless: Each request must have all necessary information; the server does not remember past requests.</li>
+        <li>Client-Server Structure: Allows clients and servers to evolve separately without depending on each other.</li>
+        <li>Cacheable: Clients can cache responses to improve performance and reduce server load.</li>
+        <li>Uniform Interface: Makes the system simpler and more modular, allowing separate components to evolve.</li>
+        <li>Hypermedia Driven: Clients interact with the server via hyperlinks provided dynamically by server responses.</li>
+    </ul> <br />
+    <img style={{width: '100%'}} src={Img3} alt="image3" /> <br /> <br />
 
-        <p><strong onClick={() => handleHeadingClick("NormalizeReshape")}>7. Normalizing and Reshaping Features</strong></p>
-        <p>Data normalization and reshaping are critical for preparing the data to fit the input requirements of the pre-trained VGG16 model, ensuring that each input is treated equally during model training.</p> <br />
+    <p><b>HTTP Methods in RESTful APIs</b></p>
+    <ul>
+        <li>GET: Retrieves information from the server.</li>
+        <li>POST: Sends new information to the server.</li>
+        <li>PUT: Updates existing information on the server.</li>
+        <li>DELETE: Removes existing information from the server.</li>
+        <li>PATCH: Makes partial updates to existing information on the server.</li>
+    </ul> <br />
+    <img style={{width: '100%'}} src={Img4} alt="image4" /> <br /> <br />
 
-        <p><strong onClick={() => handleHeadingClick("LoadVGG16")}>8. Loading Pre-trained VGG16 Model</strong></p>
-        <p>The pre-trained VGG16 model is loaded, set to extract deep features from the images. This model, trained on extensive datasets like ImageNet, provides a rich feature extraction capability.</p> <br />
+    <p><b>Example Use Case of RESTful APIs</b></p>
+    <p>A simple API for a book collection might include actions like retrieving all books, getting details of a specific book, adding a new book, updating an existing book, and deleting a book from the collection.</p> <br />
 
-        <p><strong onClick={() => handleHeadingClick("ExtractFeatures")}>9. Extracting Features</strong></p>
-        <p>A function is defined to pass images through the VGG16 model and extract significant features necessary for classifying the images effectively using machine learning techniques.</p> <br />
+    <p>The Key aspects of integrating these technologies are:-</p>
+    <ul>
+        <li><b>NLP with spaCy:</b> Utilizes spaCy for efficient text analysis and processing in web applications.</li>
+        <li><b>Web Development with Flask:</b> Employs Flask's features to build user interfaces and manage web requests, facilitating interaction with NLP applications.</li>
+        <li><b>RESTful API Design:</b> Develops APIs that are easy to use, maintain, and scale, enhancing communication between different software components.</li>
+    </ul>
+</div>
 
-        <p><strong onClick={() => handleHeadingClick("ComputeCosSim")}>10. Computing Cosine Similarity</strong></p>
-        <p>Cosine similarity measures are computed between features of the training set and the test set to determine how similar the images are, aiding in the classification process based on the most similar training examples.</p> <br />
-
-        <p><strong onClick={() => handleHeadingClick("EvaluateClass")}>11. Evaluating Cosine Similarity Classification</strong></p>
-        <p>The effectiveness of using cosine similarity for classification is evaluated, providing insights into the accuracy of this method in categorizing images based on learned patterns and similarities.</p> <br />
-
-        <p><strong onClick={() => handleHeadingClick("PreprocessImage")}>12. Preprocessing and Classifying New Images</strong></p>
-        <p>Functions are prepared to preprocess new images, extract their features using the pre-trained model, and classify them by comparing these features to those of the images in the training set through cosine similarity.</p> <br />
-
-        <p><strong onClick={() => handleHeadingClick("ClassifyImage")}>13. Displaying Classification Results</strong></p>
-        <p>The classification results are displayed, showing the predicted labels for new images, which helps in understanding the model's performance and its practical application in real-world scenarios.</p> <br />
-
-        <p>The Key aspects of this code are:-</p>
-        <ul>
-        <li><b>Feature Extraction:</b> Feature extraction involves identifying and extracting important characteristics or patterns from industrial equipment images.  In the context of image classification, these features can include edges, textures, shapes, and more complex structures.</li> <br />
-        {/* <img style={{width: '100%'}} src={Img1} alt="image1" /> <br /> <br />
-        <img style={{width: '100%'}} src={Img2} alt="image2" /> <br /> <br /> */}
-        <li><b>Cosine Similarity: </b> Cosine similarity measures the similarity between two vectors by comparing the angle between them. It is often used for image classification by comparing the feature vectors of images to determine how similar they are.</li>
-        
-        </ul>
-    </div>
 
         <div className="box4">
             <div className="code-container">
@@ -345,7 +362,7 @@ const Lab2 = () => {
     </div>
     <div> 
             <button className="button">
-            <a href="https://www.kaggle.com/code/pushkarns/unit-3-lab-1-final" target="_blank"> View Runable code</a>
+            <a href="https://www.kaggle.com/code/priyanshsurana/chatbot/notebook  " target="_blank"> View Runable code</a>
             </button>
     </div>
     </div>

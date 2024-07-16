@@ -153,77 +153,202 @@ if __name__ == "__main__":
 `;
 
 const codeSections = {
-  Step1: `
-# Install libraries if not already installed
-
-
-!pip install tensorflow scikit-learn
+  Knowledge: `
+class BajajExpertSystem:
+    def __init__(self):
+        # Initialize rules with conditions and conclusions
+        self.rules = [
+            {"conditions": ["not_starting", "battery_low"], "conclusion": "Charge the battery."},
+            {"conditions": ["not_starting", "battery_ok"], "conclusion": "Check the starter motor."},
+            {"conditions": ["starting", "stalls_frequently"], "conclusion": "Check the fuel supply."},
+            {"conditions": ["starting", "poor_acceleration"], "conclusion": "Check the air filter."},
+            {"conditions": ["starting", "unusual_noises"], "conclusion": "Check the engine."},
+        ]
 `,
-  ImportLibs: `
-import numpy as np
-import tensorflow as tf
-from tensorflow.keras.preprocessing.image import ImageDataGenerator, img_to_array, load_img
-from tensorflow.keras.applications import VGG16
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.cluster import KMeans
-from sklearn.metrics import classification_report
-import matplotlib.pyplot as plt
+  infrence: `
+      def diagnose(self, symptoms):
+        # Loop through each rule to find a match with the provided symptoms
+        for rule in self.rules:
+            if all(condition in symptoms for condition in rule["conditions"]):
+                return rule["conclusion"]
+        return "No diagnosis found. Please consult a professional mechanic."
 `,
-  DefinePath: `
-  dataset_path = '/kaggle/input/real-life-industrial-dataset-of-casting-product'
-`,
+  flask: `
+  from flask import Flask, request, render_template_string
 
-  LoadDataset: `
-  datagen = ImageDataGenerator(rescale=1./255)
-  dataset = datagen.flow_from_directory(dataset_path, target_size=(224, 224), batch_size=32, class_mode='binary')
+  # Initialize the Flask application
+  app = Flask(__name__)
   `,
-  LoadPrepData: `
-  X, y = load_data(dataset)
+  routes: `
+    @app.route('/', methods=['GET', 'POST'])
+def home():
+    # Create an instance of the expert system
+    system = BajajExpertSystem()
+    if request.method == 'POST':
+        # Get the list of symptoms from the form submission
+        symptoms = request.form.getlist('symptoms')
+        # Use the expert system to diagnose based on the symptoms
+        diagnosis = system.diagnose(symptoms)
+        # Render the diagnosis result
+        return render_template_string("""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        background-color: #f4f4f4;
+                        text-align: center;
+                        padding: 50px;
+                    }
+                    h1 {
+                        color: #333;
+                    }
+                    p {
+                        color: #666;
+                    }
+                    .button {
+                        background-color: #4CAF50;
+                        color: white;
+                        padding: 14px 20px;
+                        margin: 8px 0;
+                        border: none;
+                        cursor: pointer;
+                        transition: all 0.3s ease 0s;
+                    }
+                    .button:hover {
+                        background-color: #45a049;
+                    }
+                    form {
+                        background-color: #ffffff;
+                        padding: 20px;
+                        border-radius: 8px;
+                        box-shadow: 0 0 10px 0 rgba(0,0,0,0.1);
+                    }
+                    label {
+                        margin-right: 10px;
+                    }
+                </style>
+            </head>
+            <body>
+                <h1>Diagnosis Result</h1>
+                <p>{{ diagnosis }}</p>
+                <a href="/" class="button">Back</a>
+            </body>
+            </html>
+        """, diagnosis=diagnosis)
+    # Render the initial form for users to input symptoms
+    return render_template_string("""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {
+                    font-family: 'Arial', sans-serif;
+                    background-color: #f4f4f4;
+                    text-align: center;
+                    padding: 50px;
+                }
+                h1 {
+                    color: #333;
+                }
+                form {
+                    background-color: #ffffff;
+                    padding: 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 0 10px 0 rgba(0,0,0,0.1);
+                }
+                .button {
+                    background-color: #008CBA;
+                    color: white;
+                    padding: 15px 20px;
+                    margin: 10px 0;
+                    border: none;
+                    cursor: pointer;
+                    transition: opacity 0.3s ease-in-out;
+                }
+                .button:hover {
+                    opacity: 0.7;
+                }
+                label {
+                    margin-right: 10px;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>Welcome to the Bajaj Expert System</h1>
+            <form method="post">
+                <label><input type="checkbox" name="symptoms" value="not_starting"> Not Starting</label><br>
+                <label><input type="checkbox" name="symptoms" value="battery_low"> Battery Low</label><br>
+                <label><input type="checkbox" name="symptoms" value="battery_ok"> Battery OK</label><br>
+                <label><input type="checkbox" name="symptoms" value="starting"> Starting</label><br>
+                <label><input type="checkbox" name="symptoms" value="stalls_frequently"> Stalls Frequently</label><br>
+                <label><input type="checkbox" name="symptoms" value="poor_acceleration"> Poor Acceleration</label><br>
+                <label><input type="checkbox" name="symptoms" value="unusual_noises"> Unusual Noises</label><br>
+                <input type="submit" value="Diagnose" class="button">
+            </form>
+        </body>
+        </html>
+    """)
   `,
-  SplitData: `
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-  `,
-  NormaliseReshape: `
-  scaler = StandardScaler()
-  X_train = scaler.fit_transform(X_train.reshape(-1, 224 * 224 * 3))
-  X_test = scaler.transform(X_test.reshape(-1, 224 * 224 * 3))
-  `,
-  LoadVGG16: `
-  base_model = VGG16(include_top=False, weights='imagenet', input_shape=(224, 224, 3))
-  model = tf.keras.Model(inputs=base_model.input, outputs=base_model.get_layer('block5_pool').output)
-  `,
-  ExtractFeatures:`
-  X_train_features = extract_features(model, X_train.reshape(-1, 224, 224, 3))
-  X_test_features = extract_features(model, X_test.reshape(-1, 224, 224, 3))
-  `,
-  ComputeCosSim: `
-  cos_sim = cosine_similarity(X_test_features, X_train_features)
-  predicted_labels_cos_sim = y_train[np.argmax(cos_sim, axis=1)]
-  `,
-  EvaluateClass: `
-  print("Cosine Similarity Classification Report")
-  print(classification_report(y_test, predicted_labels_cos_sim))
-  `,
-  PreprocessingImage: `
-  def preprocess_image(image_path):
-    print(f"Preprocessing image: {image_path}")
-    img = load_img(image_path, target_size=(224, 224))
-    img_array = img_to_array(img) / 255.0
-    img_array = np.expand_dims(img_array, axis=0)
-    return img_array
+  html: `
+  return render_template_string("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {
+                font-family: 'Arial', sans-serif;
+                background-color: #f4f4f4;
+                text-align: center;
+                padding: 50px;
+            }
+            h1 {
+                color: #333;
+            }
+            form {
+                background-color: #ffffff;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 0 10px 0 rgba(0,0,0,0.1);
+            }
+            .button {
+                background-color: #008CBA;
+                color: white;
+                padding: 15px 20px;
+                margin: 10px 0;
+                border: none;
+                cursor: pointer;
+                transition: opacity 0.3s ease-in-out;
+            }
+            .button:hover {
+                opacity: 0.7;
+            }
+            label {
+                margin-right: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Welcome to the Bajaj Expert System</h1>
+        <form method="post">
+            <label><input type="checkbox" name="symptoms" value="not_starting"> Not Starting</label><br>
+            <label><input type="checkbox" name="symptoms" value="battery_low"> Battery Low</label><br>
+            <label><input type="checkbox" name="symptoms" value="battery_ok"> Battery OK</label><br>
+            <label><input type="checkbox" name="symptoms" value="starting"> Starting</label><br>
+            <label><input type="checkbox" name="symptoms" value="stalls_frequently"> Stalls Frequently</label><br>
+            <label><input type="checkbox" name="symptoms" value="poor_acceleration"> Poor Acceleration</label><br>
+            <label><input type="checkbox" name="symptoms" value="unusual_noises"> Unusual Noises</label><br>
+            <input type="submit" value="Diagnose" class="button">
+        </form>
+    </body>
+    </html>
+""")
 
-  def extract_image_features(model, img_array):
-      print("Extracting image features")
-      features = model.predict(img_array)
-      return features.reshape(1, -1)
   `,
-  ClassifyImage: `
-  image_path = '/kaggle/input/testimage1/cast_def_0_138.jpeg'
-  predicted_quality = classify_image(image_path, model, X_train_features, y_train)
-  print(f"The predicted quality for the image is: {'High' if predicted_quality == 1 else 'Low'}")
+  run: `
+  if __name__ == "__main__":
+    app.run(debug=True)
   `
 };
 
@@ -322,12 +447,12 @@ const Lab2 = () => {
       <div className="box3">
         <h2>Simple Expert System for Decision Support</h2> <br />
 
-        <p><strong>Overview</strong></p>
+        <p><b>Overview</b></p>
         <p>This project is a web-based application for diagnosing Bajaj vehicle issues using an expert 
         system and Flask. The application allows users to input symptoms their vehicle is experiencing, 
         and based on predefined rules, it provides a diagnosis.</p> <br />
 
-        <p><strong onClick={() => handleHeadingClick("Expert")}>Expert System</strong></p> <br />
+        <p><b>Expert System</b></p> <br />
         <p><b>Defination:</b> : An expert system is a computer program that mimics the decision-making abilities of a human expert. It uses predefined rules and a knowledge base to diagnose problems or provide solutions.</p> <br />
         <img style={{width: '100%'}} src={Img1} alt="image1" /> <br /> <br />
 
@@ -344,7 +469,7 @@ const Lab2 = () => {
           </li>
           <br />
           <li>
-            <p><strong onClick={() => handleHeadingClick("user")}>User Interface</strong></p>
+            <p><b>User Interface</b></p>
             <p>Allows users to interact with the system, input their symptoms, and receive diagnoses. 
               This is achieved through the web interface created using Flask (explained below).</p>
           </li>
@@ -365,7 +490,7 @@ const Lab2 = () => {
           </li>
           <br />
           <li>
-            <p><strong>Routes:</strong></p>
+            <p><strong onClick={() => handleHeadingClick("routes")}>Routes:</strong></p>
             <ul>
               <li><p><b>Home Route ('/'):</b> Handles both GET and POST requests.</p></li>
               <li><p><b>GET Request:</b> Displays a form where users can select symptoms.</p></li>
@@ -400,8 +525,11 @@ const Lab2 = () => {
         </div>
     </div>
     <div> 
-            <button className="button">
-            <a href="https://www.kaggle.com/code/pushkarns/unit-3-lab-1-final" target="_blank"> View Runable code</a>
+            <button className="button" style={{marginRight: "20px"}}>
+            <a href="https://www.kaggle.com/code/priyansh2904/unit4-lab1?scriptVersionId=188475084" target="_blank"> View Runable code</a>
+            </button>
+            <button className="button" style={{padding: "10px"}}>
+            <a href="/Unit4Lab1.py" download={"Unit4Lab1.py"}> Downlaod code</a>
             </button>
     </div>
     </div>
