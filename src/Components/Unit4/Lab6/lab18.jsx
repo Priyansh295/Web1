@@ -3,233 +3,705 @@ import hljs from 'highlight.js/lib/core';
 import python from 'highlight.js/lib/languages/python';
 import 'highlight.js/styles/github.css';
 import 'ace-builds/webpack-resolver'; 
-// import Img1 from './imgs/image1.png';
-// import Img2 from './imgs/image2.png';
-// import Img3 from './imgs/image3.png';
-// import Img4 from './imgs/image4.png';
-// import Img5 from './imgs/image5.png';
+import Img1 from './imgs/image1.png';
+import Img2 from './imgs/image2.png';
+import Img3 from './imgs/image3.png';
 import './lab18.css';
 
 hljs.registerLanguage('python', python);
 
 const codeSnippet2 = `
-from flask import Flask, request, render_template_string
+import pandas as pd
+import numpy as np
 
-# Initialize the Flask application
-app = Flask(__name__)
+# Parameters
+n_samples = 1000
 
-# Define the expert system class
-class BajajExpertSystem:
-    def __init__(self):
-        # Initialize rules with conditions and conclusions
-        self.rules = [
-            {"conditions": ["not_starting", "battery_low"], "conclusion": "Charge the battery."},
-            {"conditions": ["not_starting", "battery_ok"], "conclusion": "Check the starter motor."},
-            {"conditions": ["starting", "stalls_frequently"], "conclusion": "Check the fuel supply."},
-            {"conditions": ["starting", "poor_acceleration"], "conclusion": "Check the air filter."},
-            {"conditions": ["starting", "unusual_noises"], "conclusion": "Check the engine."},
-        ]
+# Generate data
+np.random.seed(42)
+temperature = np.random.normal(loc=25, scale=5, size=n_samples)
+pressure = np.random.normal(loc=1, scale=0.2, size=n_samples)
+vibration = np.random.normal(loc=0.01, scale=0.005, size=n_samples)
 
-    # Method to diagnose based on symptoms
-    def diagnose(self, symptoms):
-        # Loop through each rule to find a match with the provided symptoms
-        for rule in self.rules:
-            if all(condition in symptoms for condition in rule["conditions"]):
-                return rule["conclusion"]
-        return "No diagnosis found. Please consult a professional mechanic."
+# Classify data as healthy or unhealthy
+def classify(temperature, pressure, vibration):
+    if temperature > 30 or pressure > 1.2 or vibration > 0.02:
+        return 'unhealthy'
+    else:
+        return 'healthy'
 
-# Define the route for the home page
-@app.route('/', methods=['GET', 'POST'])
-def home():
-    # Create an instance of the expert system
-    system = BajajExpertSystem()
-    if request.method == 'POST':
-        # Get the list of symptoms from the form submission
-        symptoms = request.form.getlist('symptoms')
-        # Use the expert system to diagnose based on the symptoms
-        diagnosis = system.diagnose(symptoms)
-        # Render the diagnosis result
-        return render_template_string("""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <style>
-                    body {
-                        font-family: Arial, sans-serif;
-                        background-color: #f4f4f4;
-                        text-align: center;
-                        padding: 50px;
-                    }
-                    h1 {
-                        color: #333;
-                    }
-                    p {
-                        color: #666;
-                    }
-                    .button {
-                        background-color: #4CAF50;
-                        color: white;
-                        padding: 14px 20px;
-                        margin: 8px 0;
-                        border: none;
-                        cursor: pointer;
-                        transition: all 0.3s ease 0s;
-                    }
-                    .button:hover {
-                        background-color: #45a049;
-                    }
-                    form {
-                        background-color: #ffffff;
-                        padding: 20px;
-                        border-radius: 8px;
-                        box-shadow: 0 0 10px 0 rgba(0,0,0,0.1);
-                    }
-                    label {
-                        margin-right: 10px;
-                    }
-                </style>
-            </head>
-            <body>
-                <h1>Diagnosis Result</h1>
-                <p>{{ diagnosis }}</p>
-                <a href="/" class="button">Back</a>
-            </body>
-            </html>
-        """, diagnosis=diagnosis)
-    # Render the initial form for users to input symptoms
-    return render_template_string("""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                body {
-                    font-family: 'Arial', sans-serif;
-                    background-color: #f4f4f4;
-                    text-align: center;
-                    padding: 50px;
-                }
-                h1 {
-                    color: #333;
-                }
-                form {
-                    background-color: #ffffff;
-                    padding: 20px;
-                    border-radius: 8px;
-                    box-shadow: 0 0 10px 0 rgba(0,0,0,0.1);
-                }
-                .button {
-                    background-color: #008CBA;
-                    color: white;
-                    padding: 15px 20px;
-                    margin: 10px 0;
-                    border: none;
-                    cursor: pointer;
-                    transition: opacity 0.3s ease-in-out;
-                }
-                .button:hover {
-                    opacity: 0.7;
-                }
-                label {
-                    margin-right: 10px;
-                }
-            </style>
-        </head>
-        <body>
-            <h1>Welcome to the Bajaj Expert System</h1>
-            <form method="post">
-                <label><input type="checkbox" name="symptoms" value="not_starting"> Not Starting</label><br>
-                <label><input type="checkbox" name="symptoms" value="battery_low"> Battery Low</label><br>
-                <label><input type="checkbox" name="symptoms" value="battery_ok"> Battery OK</label><br>
-                <label><input type="checkbox" name="symptoms" value="starting"> Starting</label><br>
-                <label><input type="checkbox" name="symptoms" value="stalls_frequently"> Stalls Frequently</label><br>
-                <label><input type="checkbox" name="symptoms" value="poor_acceleration"> Poor Acceleration</label><br>
-                <label><input type="checkbox" name="symptoms" value="unusual_noises"> Unusual Noises</label><br>
-                <input type="submit" value="Diagnose" class="button">
-            </form>
-        </body>
-        </html>
-    """)
+data = pd.DataFrame({
+    'temperature': temperature,
+    'pressure': pressure,
+    'vibration': vibration
+})
+data['status'] = data.apply(lambda row: classify(row['temperature'], row['pressure'], row['vibration']), axis=1)
 
-# Run the Flask application in debug mode
-if __name__ == "__main__":
-    app.run(debug=True)
+# Save training data
+data.to_csv('training_data.csv', index=False)
+print("Training data generated and saved to 'training_data.csv'")
+
+data = pd.read_csv('training_data.csv')
+data.head()
+
+# Extract features and labels
+X = data[['temperature', 'pressure', 'vibration']]
+y = data['status']
+
+# Convert labels to numerical values
+y = y.map({'healthy': 0, 'unhealthy': 1})
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Initialize the model
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+
+# Train the model
+model.fit(X_train, y_train)
+
+# Evaluate the model
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print(f'Model Accuracy: {accuracy:.2f}')
+
+import numpy as np
+
+def real_time_data_generator():
+    while True:
+        temperature = np.random.normal(loc=25, scale=5)
+        pressure = np.random.normal(loc=1, scale=0.2)
+        vibration = np.random.normal(loc=0.01, scale=0.005)
+        yield {'temperature': temperature, 'pressure': pressure, 'vibration': vibration}
+
+import joblib
+
+# Save the model to a file
+joblib.dump(model, 'equipment_monitoring_model.pkl')
+print("Model saved to 'equipment_monitoring_model.pkl'")
+
+import dash
+import dash_core_components as dcc
+import dash_html_components as html
+import plotly.graph_objs as go
+from dash.dependencies import Input, Output
+from collections import deque
+import pandas as pd
+import numpy as np
+import joblib
+import time
+
+# Load the trained model
+model = joblib.load('equipment_monitoring_model.pkl')
+
+# Initialize the app
+app = dash.Dash(__name__)
+
+# Create a deque to hold the real-time data
+window_size = 30  # Define the size of the sliding window (30 seconds)
+data_deque = deque(maxlen=window_size)
+error_timestamps = deque(maxlen=1000)  # Keep track of error timestamps
+
+# Function to update the deque with new data
+def update_data():
+    generator = real_time_data_generator()
+    while True:
+        new_data = next(generator)
+        data_deque.append(new_data)
+        yield
+
+# Create a data generator
+data_gen = update_data()
+
+# Define the layout of the app
+app.layout = html.Div(children=[
+    html.H1(children='Real-Time Industrial Equipment Monitoring Dashboard'),
+
+    dcc.Graph(id='temperature-graph'),
+    dcc.Graph(id='pressure-graph'),
+    dcc.Graph(id='vibration-graph'),
+
+    html.Div(id='status-container', style={'textAlign': 'center', 'marginTop': '20px', 'width': '100%', 'padding': '0'}),
+    
+    html.Div(id='additional-info', style={'display': 'flex', 'justifyContent': 'space-around', 'marginTop': '20px', 'width': '100%'}),
+    
+    dcc.Interval(
+        id='interval-component',
+        interval=1000,  # in milliseconds (1 second)
+        n_intervals=0
+    )
+])
+
+def get_status_style(status):
+    if status == 0:
+        return {
+            'backgroundColor': '#98FB98',  # pastel green
+            'color': '#006400',  # dark green text
+            'padding': '20px',
+            'borderRadius': '10px',
+            'width': '96.3%',
+            'textAlign': 'center',
+            'margin': '0'
+        }
+    else:
+        return {
+            'backgroundColor': '#FFCCCB',  # pastel red
+            'color': '#8B0000',  # dark red text
+            'padding': '20px',
+            'borderRadius': '10px',
+            'width': '96.3%',
+            'textAlign': 'center',
+            'margin': '0'
+        }
+
+def get_status_color_and_text(status):
+    if status == 0:
+        return 'Healthy'
+    else:
+        return 'Unhealthy'
+
+def get_time_since_last_error():
+    if error_timestamps:
+        return time.time() - error_timestamps[-1]
+    return float('inf')
+
+def get_error_count_last_10_seconds():
+    current_time = time.time()
+    count = sum(1 for timestamp in error_timestamps if current_time - timestamp <= 10)
+    return count
+
+# Update temperature graph
+@app.callback(
+    Output('temperature-graph', 'figure'),
+    [Input('interval-component', 'n_intervals')]
+)
+def update_temperature_graph(n):
+    next(data_gen)  # Update the deque with new data
+    df = pd.DataFrame(data_deque)
+    if df.empty:
+        return go.Figure()  # Return an empty figure if no data
+
+    z = df['temperature']
+    figure = {
+        'data': [
+            go.Scatter(
+                x=list(range(n-len(df), n)),
+                y=df['temperature'],
+                mode='lines+markers',
+                marker=dict(
+                    size=10,
+                    color=z,
+                    colorscale='RdBu_r',  # Inverted RdBu colorscale
+                    showscale=True,
+                    colorbar=dict(title='Temperature')
+                ),
+                line=dict(
+                    color='black',
+                    width=2
+                ),
+                name='Temperature'
+            )
+        ],
+        'layout': go.Layout(
+            title='Temperature Over Time',
+            xaxis=dict(title='Time'),
+            yaxis=dict(title='Temperature (°C)'),
+            xaxis_range=[max(0, n-window_size), n]  # Sliding window
+        )
+    }
+    return figure
+
+# Update pressure graph
+@app.callback(
+    Output('pressure-graph', 'figure'),
+    [Input('interval-component', 'n_intervals')]
+)
+def update_pressure_graph(n):
+    df = pd.DataFrame(data_deque)
+    if df.empty:
+        return go.Figure()  # Return an empty figure if no data
+
+    z = df['pressure']
+    figure = {
+        'data': [
+            go.Scatter(
+                x=list(range(n-len(df), n)),
+                y=df['pressure'],
+                mode='lines+markers',
+                marker=dict(
+                    size=10,
+                    color=z,
+                    colorscale='Viridis',
+                    showscale=True,
+                    colorbar=dict(title='Pressure')
+                ),
+                line=dict(
+                    color='black',
+                    width=2
+                ),
+                name='Pressure'
+            )
+        ],
+        'layout': go.Layout(
+            title='Pressure Over Time',
+            xaxis=dict(title='Time'),
+            yaxis=dict(title='Pressure (atm)'),
+            xaxis_range=[max(0, n-window_size), n]  # Sliding window
+        )
+    }
+    return figure
+
+# Update vibration graph
+@app.callback(
+    Output('vibration-graph', 'figure'),
+    [Input('interval-component', 'n_intervals')]
+)
+def update_vibration_graph(n):
+    df = pd.DataFrame(data_deque)
+    if df.empty:
+        return go.Figure()  # Return an empty figure if no data
+
+    z = df['vibration']
+    figure = {
+        'data': [
+            go.Scatter(
+                x=list(range(n-len(df), n)),
+                y=df['vibration'],
+                mode='lines+markers',
+                marker=dict(
+                    size=10,
+                    color=z,
+                    colorscale='Viridis',
+                    showscale=True,
+                    colorbar=dict(title='Vibration')
+                ),
+                line=dict(
+                    color='black',
+                    width=2
+                ),
+                name='Vibration'
+            )
+        ],
+        'layout': go.Layout(
+            title='Vibration Over Time',
+            xaxis=dict(title='Time'),
+            yaxis=dict(title='Vibration (m/s^2)'),
+            xaxis_range=[max(0, n-window_size), n]  # Sliding window
+        )
+    }
+    return figure
+
+# Update status indicator
+@app.callback(
+    Output('status-container', 'children'),
+    [Input('interval-component', 'n_intervals')]
+)
+def update_status_indicator(n):
+    df = pd.DataFrame(data_deque)
+    if not df.empty:
+        # Make sure to use a DataFrame with the same feature names as used during training
+        latest_data = df[['temperature', 'pressure', 'vibration']].iloc[-1].to_frame().T
+        current_status = model.predict(latest_data)[0]
+        status_text = get_status_color_and_text(current_status)
+        status_style = get_status_style(current_status)
+        
+        if current_status == 1:
+            error_timestamps.append(time.time())
+        
+        return html.Div(f'Current Status: {status_text}', style=status_style)
+    else:
+        return html.Div('No Data', style={'backgroundColor': 'black', 'color': 'white', 'padding': '20px', 'borderRadius': '10px', 'textAlign': 'center', 'width': '100%', 'margin': '0'})
+
+# Update additional info
+@app.callback(
+    Output('additional-info', 'children'),
+    [Input('interval-component', 'n_intervals')]
+)
+def update_additional_info(n):
+    time_since_last_error = get_time_since_last_error()
+    error_count_last_10_seconds = get_error_count_last_10_seconds()
+    
+    time_since_last_error_text = f'Time Since Last Error: {time_since_last_error:.2f} seconds'
+    error_count_text = f'Number of Errors in Last 10 Seconds: {error_count_last_10_seconds}'
+    
+    return [
+        html.Div(time_since_last_error_text, style={'backgroundColor': '#E0E0E0', 'padding': '20px', 'borderRadius': '10px', 'textAlign': 'center', 'width': '45%', 'color': 'black', 'margin': '0'}),
+        html.Div(error_count_text, style={'backgroundColor': '#E0E0E0', 'padding': '20px', 'borderRadius': '10px', 'textAlign': 'center', 'width': '45%', 'color': 'black', 'margin': '0'})
+    ]
+
+# Real-time data generator function
+def real_time_data_generator():
+    while True:
+        temperature = np.random.normal(loc=25, scale=5)
+        pressure = np.random.normal(loc=1, scale=0.2)
+        vibration = np.random.normal(loc=0.01, scale=0.005)
+        yield {'temperature': temperature, 'pressure': pressure, 'vibration': vibration}
+
+# Run the app
+if __name__ == '__main__':
+    app.run_server(debug=True)
 
 `;
 
 const codeSections = {
-  Step1: `
-# Install libraries if not already installed
-
-
-!pip install tensorflow scikit-learn
-`,
-  ImportLibs: `
-import numpy as np
-import tensorflow as tf
-from tensorflow.keras.preprocessing.image import ImageDataGenerator, img_to_array, load_img
-from tensorflow.keras.applications import VGG16
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.cluster import KMeans
-from sklearn.metrics import classification_report
-import matplotlib.pyplot as plt
-`,
-  DefinePath: `
-  dataset_path = '/kaggle/input/real-life-industrial-dataset-of-casting-product'
-`,
-
-  LoadDataset: `
-  datagen = ImageDataGenerator(rescale=1./255)
-  dataset = datagen.flow_from_directory(dataset_path, target_size=(224, 224), batch_size=32, class_mode='binary')
+    Step1: `
+  # Generate Training Data
+  import pandas as pd
+  import numpy as np
+  
+  # Parameters
+  n_samples = 1000
+  
+  # Generate data
+  np.random.seed(42)
+  temperature = np.random.normal(loc=25, scale=5, size=n_samples)
+  pressure = np.random.normal(loc=1, scale=0.2, size=n_samples)
+  vibration = np.random.normal(loc=0.01, scale=0.005, size=n_samples)
+  
+  # Classify data as healthy or unhealthy
+  def classify(temperature, pressure, vibration):
+      if temperature > 30 or pressure > 1.2 or vibration > 0.02:
+          return 'unhealthy'
+      else:
+          return 'healthy'
+  
+  data = pd.DataFrame({
+      'temperature': temperature,
+      'pressure': pressure,
+      'vibration': vibration
+  })
+  data['status'] = data.apply(lambda row: classify(row['temperature'], row['pressure'], row['vibration']), axis=1)
   `,
-  LoadPrepData: `
-  X, y = load_data(dataset)
+  
+    Step2: `
+  # Save Training Data
+  data.to_csv('training_data.csv', index=False)
+  print("Training data generated and saved to 'training_data.csv'")
   `,
-  SplitData: `
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+  
+    Step3: `
+  # Load and Preprocess Data
+  data = pd.read_csv('training_data.csv')
+  data.head()
+  
+  # Extract features and labels
+  X = data[['temperature', 'pressure', 'vibration']]
+  y = data['status']
+  
+  # Convert labels to numerical values
+  y = y.map({'healthy': 0, 'unhealthy': 1})
   `,
-  NormaliseReshape: `
-  scaler = StandardScaler()
-  X_train = scaler.fit_transform(X_train.reshape(-1, 224 * 224 * 3))
-  X_test = scaler.transform(X_test.reshape(-1, 224 * 224 * 3))
+  
+    Step4: `
+  # Split Data into Training and Testing Sets
+  from sklearn.model_selection import train_test_split
+  X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
   `,
-  LoadVGG16: `
-  base_model = VGG16(include_top=False, weights='imagenet', input_shape=(224, 224, 3))
-  model = tf.keras.Model(inputs=base_model.input, outputs=base_model.get_layer('block5_pool').output)
+  
+    Step5: `
+  # Train the Model
+  from sklearn.ensemble import RandomForestClassifier
+  
+  # Initialize the model
+  model = RandomForestClassifier(n_estimators=100, random_state=42)
+  
+  # Train the model
+  model.fit(X_train, y_train)
   `,
-  ExtractFeatures:`
-  X_train_features = extract_features(model, X_train.reshape(-1, 224, 224, 3))
-  X_test_features = extract_features(model, X_test.reshape(-1, 224, 224, 3))
+  
+    Step6: `
+  # Evaluate the Model
+  from sklearn.metrics import accuracy_score
+  
+  # Evaluate the model
+  y_pred = model.predict(X_test)
+  accuracy = accuracy_score(y_test, y_pred)
+  print(f'Model Accuracy: {accuracy:.2f}')
   `,
-  ComputeCosSim: `
-  cos_sim = cosine_similarity(X_test_features, X_train_features)
-  predicted_labels_cos_sim = y_train[np.argmax(cos_sim, axis=1)]
+  
+    Step7: `
+  # Save the Model
+  import joblib
+  
+  # Save the model to a file
+  joblib.dump(model, 'equipment_monitoring_model.pkl')
+  print("Model saved to 'equipment_monitoring_model.pkl'")
   `,
-  EvaluateClass: `
-  print("Cosine Similarity Classification Report")
-  print(classification_report(y_test, predicted_labels_cos_sim))
+  
+    Step8: `
+  # Create the Dashboard
+  import dash
+  import dash_core_components as dcc
+  import dash_html_components as html
+  import plotly.graph_objs as go
+  from dash.dependencies import Input, Output
+  from collections import deque
+  import pandas as pd
+  import numpy as np
+  import joblib
+  import time
+  
+  # Load the trained model
+  model = joblib.load('equipment_monitoring_model.pkl')
+  
+  # Initialize the app
+  app = dash.Dash(__name__)
+  
+  # Create a deque to hold the real-time data
+  window_size = 30  # Define the size of the sliding window (30 seconds)
+  data_deque = deque(maxlen=window_size)
+  error_timestamps = deque(maxlen=1000)  # Keep track of error timestamps
+  
+  # Function to update the deque with new data
+  def update_data():
+      generator = real_time_data_generator()
+      while True:
+          new_data = next(generator)
+          data_deque.append(new_data)
+          yield
+  
+  # Create a data generator
+  data_gen = update_data()
+  
+  # Define the layout of the app
+  app.layout = html.Div(children=[
+      html.H1(children='Real-Time Industrial Equipment Monitoring Dashboard'),
+  
+      dcc.Graph(id='temperature-graph'),
+      dcc.Graph(id='pressure-graph'),
+      dcc.Graph(id='vibration-graph'),
+  
+      html.Div(id='status-container', style={'textAlign': 'center', 'marginTop': '20px', 'width': '100%', 'padding': '0'}),
+      
+      html.Div(id='additional-info', style={'display': 'flex', 'justifyContent': 'space-around', 'marginTop': '20px', 'width': '100%'}),
+      
+      dcc.Interval(
+          id='interval-component',
+          interval=1000,  # in milliseconds (1 second)
+          n_intervals=0
+      )
+  ])
   `,
-  PreprocessingImage: `
-  def preprocess_image(image_path):
-    print(f"Preprocessing image: {image_path}")
-    img = load_img(image_path, target_size=(224, 224))
-    img_array = img_to_array(img) / 255.0
-    img_array = np.expand_dims(img_array, axis=0)
-    return img_array
-
-  def extract_image_features(model, img_array):
-      print("Extracting image features")
-      features = model.predict(img_array)
-      return features.reshape(1, -1)
+  
+    Step9: `
+  # Update Data
+  def real_time_data_generator():
+      while True:
+          temperature = np.random.normal(loc=25, scale=5)
+          pressure = np.random.normal(loc=1, scale=0.2)
+          vibration = np.random.normal(loc=0.01, scale=0.005)
+          yield {'temperature': temperature, 'pressure': pressure, 'vibration': vibration}
   `,
-  ClassifyImage: `
-  image_path = '/kaggle/input/testimage1/cast_def_0_138.jpeg'
-  predicted_quality = classify_image(image_path, model, X_train_features, y_train)
-  print(f"The predicted quality for the image is: {'High' if predicted_quality == 1 else 'Low'}")
+  
+    Step10: `
+  # Update Graphs
+  @app.callback(
+      Output('temperature-graph', 'figure'),
+      [Input('interval-component', 'n_intervals')]
+  )
+  def update_temperature_graph(n):
+      next(data_gen)  # Update the deque with new data
+      df = pd.DataFrame(data_deque)
+      if df.empty:
+          return go.Figure()  # Return an empty figure if no data
+  
+      z = df['temperature']
+      figure = {
+          'data': [
+              go.Scatter(
+                  x=list(range(n-len(df), n)),
+                  y=df['temperature'],
+                  mode='lines+markers',
+                  marker=dict(
+                      size=10,
+                      color=z,
+                      colorscale='RdBu_r',  # Inverted RdBu colorscale
+                      showscale=True,
+                      colorbar=dict(title='Temperature')
+                  ),
+                  line=dict(
+                      color='black',
+                      width=2
+                  ),
+                  name='Temperature'
+              )
+          ],
+          'layout': go.Layout(
+              title='Temperature Over Time',
+              xaxis=dict(title='Time'),
+              yaxis=dict(title='Temperature (°C)'),
+              xaxis_range=[max(0, n-window_size), n]  # Sliding window
+          )
+      }
+      return figure
+  
+  @app.callback(
+      Output('pressure-graph', 'figure'),
+      [Input('interval-component', 'n_intervals')]
+  )
+  def update_pressure_graph(n):
+      df = pd.DataFrame(data_deque)
+      if df.empty:
+          return go.Figure()  # Return an empty figure if no data
+  
+      z = df['pressure']
+      figure = {
+          'data': [
+              go.Scatter(
+                  x=list(range(n-len(df), n)),
+                  y=df['pressure'],
+                  mode='lines+markers',
+                  marker=dict(
+                      size=10,
+                      color=z,
+                      colorscale='Viridis',
+                      showscale=True,
+                      colorbar=dict(title='Pressure')
+                  ),
+                  line=dict(
+                      color='black',
+                      width=2
+                  ),
+                  name='Pressure'
+              )
+          ],
+          'layout': go.Layout(
+              title='Pressure Over Time',
+              xaxis=dict(title='Time'),
+              yaxis=dict(title='Pressure (atm)'),
+              xaxis_range=[max(0, n-window_size), n]  # Sliding window
+          )
+      }
+      return figure
+  
+  @app.callback(
+      Output('vibration-graph', 'figure'),
+      [Input('interval-component', 'n_intervals')]
+  )
+  def update_vibration_graph(n):
+      df = pd.DataFrame(data_deque)
+      if df.empty:
+          return go.Figure()  # Return an empty figure if no data
+  
+      z = df['vibration']
+      figure = {
+          'data': [
+              go.Scatter(
+                  x=list(range(n-len(df), n)),
+                  y=df['vibration'],
+                  mode='lines+markers',
+                  marker=dict(
+                      size=10,
+                      color=z,
+                      colorscale='Viridis',
+                      showscale=True,
+                      colorbar=dict(title='Vibration')
+                  ),
+                  line=dict(
+                      color='black',
+                      width=2
+                  ),
+                  name='Vibration'
+              )
+          ],
+          'layout': go.Layout(
+              title='Vibration Over Time',
+              xaxis=dict(title='Time'),
+              yaxis=dict(title='Vibration (m/s^2)'),
+              xaxis_range=[max(0, n-window_size), n]  # Sliding window
+          )
+      }
+      return figure
+  `,
+  
+    Step11: `
+  # Update Status Indicator
+  def get_status_style(status):
+      if status == 0:
+          return {
+              'backgroundColor': '#98FB98',  # pastel green
+              'color': '#006400',  # dark green text
+              'padding': '20px',
+              'borderRadius': '10px',
+              'width': '96.3%',
+              'textAlign': 'center',
+              'margin': '0'
+          }
+      else:
+          return {
+              'backgroundColor': '#FFCCCB',  # pastel red
+              'color': '#8B0000',  # dark red text
+              'padding': '20px',
+              'borderRadius': '10px',
+              'width': '96.3%',
+              'textAlign': 'center',
+              'margin': '0'
+          }
+  
+  def get_status_color_and_text(status):
+      if status == 0:
+          return 'Healthy'
+      else:
+          return 'Unhealthy'
+  
+  def get_time_since_last_error():
+      if error_timestamps:
+          return time.time() - error_timestamps[-1]
+      return float('inf')
+  
+  def get_error_count_last_10_seconds():
+      current_time = time.time()
+      count = sum(1 for timestamp in error_timestamps if current_time - timestamp <= 10)
+      return count
+  
+  @app.callback(
+      Output('status-container', 'children'),
+      [Input('interval-component', 'n_intervals')]
+  )
+  def update_status_indicator(n):
+      df = pd.DataFrame(data_deque)
+      if not df.empty:
+          # Make sure to use a DataFrame with the same feature names as used during training
+          latest_data = df[['temperature', 'pressure', 'vibration']].iloc[-1].to_frame().T
+          current_status = model.predict(latest_data)[0]
+          status_text = get_status_color_and_text(current_status)
+          status_style = get_status_style(current_status)
+          
+          if current_status == 1:
+              error_timestamps.append(time.time())
+          
+          return html.Div(f'Current Status: {status_text}', style=status_style)
+      else:
+          return html.Div('No Data', style={'backgroundColor': 'black', 'color': 'white', 'padding': '20px', 'borderRadius': '10px', 'textAlign': 'center', 'width': '100%', 'margin': '0'})
+  `,
+  
+    Step12: `
+  # Run the Dashboard
+  @app.callback(
+      Output('additional-info', 'children'),
+      [Input('interval-component', 'n_intervals')]
+  )
+  def update_additional_info(n):
+      time_since_last_error = get_time_since_last_error()
+      error_count_last_10_seconds = get_error_count_last_10_seconds()
+      
+      time_since_last_error_text = f'Time Since Last Error: {time_since_last_error:.2f} seconds'
+      error_count_text = f'Number of Errors in Last 10 Seconds: {error_count_last_10_seconds}'
+      
+      return [
+          html.Div(time_since_last_error_text, style={'backgroundColor': '#E0E0E0', 'padding': '20px', 'borderRadius': '10px', 'textAlign': 'center', 'width': '45%', 'color': 'black', 'margin': '0'}),
+          html.Div(error_count_text, style={'backgroundColor': '#E0E0E0', 'padding': '20px', 'borderRadius': '10px', 'textAlign': 'center', 'width': '45%', 'color': 'black', 'margin': '0'})
+      ]
+  
+  if __name__ == '__main__':
+      app.run_server(debug=True)
   `
-};
+  };
+  
 
 const Lab2 = () => {
   const [highlightedCodeSnippet, setHighlightedCodeSnippet] = useState("");
@@ -324,80 +796,88 @@ const Lab2 = () => {
       <ParticleCanvas />
       <div className="Layout" style={{ display: "flex", justifyContent: "space-around", color: '#09F' }}>
       <div className="box3">
-        <h2>Simple Expert System for Decision Support</h2> <br />
+        <h2>Industrial Equipment Monitoring System</h2> <br />
+  <p>
+    <strong onClick={() => handleHeadingClick("Step1")}>Step 1: Generate Training Data</strong><br />
+    Synthetic sensor readings are generated to simulate temperature, pressure, and vibration from industrial equipment. Data points are classified as 'healthy' or 'unhealthy' based on defined conditions.
+  </p><br />
 
-        <p><strong>Overview</strong></p> <br />
-        <p>This project is a web-based application for diagnosing Bajaj vehicle issues using an expert 
-        system and Flask. The application allows users to input symptoms their vehicle is experiencing, 
-        and based on predefined rules, it provides a diagnosis.</p>
+  <p>
+    <strong onClick={() => handleHeadingClick("Step2")}>Step 2: Save Training Data</strong><br />
+    Data is saved to a CSV file named 'training_data.csv'.
+  </p><br />
 
-        <p><strong onClick={() => handleHeadingClick("Expert")}>Expert System</strong></p>
-        <p><b>Defination:</b> : An expert system is a computer program that mimics the decision-making abilities of a human expert. It uses predefined rules and a knowledge base to diagnose problems or provide solutions.</p>
+  <p>
+    <strong onClick={() => handleHeadingClick("Step3")}>Step 3: Load and Preprocess Data</strong><br />
+    The code loads the training data, converting the 'status' column into numerical values.
+  </p><br />
 
-        <p><b>Components of Expert System:</b></p>
-        <li>
-        <p><strong onClick={() => handleHeadingClick("Knowledge")}>Knowledge Base</strong></p>
-        </li>
+  <p>
+    <strong onClick={() => handleHeadingClick("Step4")}>Step 4: Split Data into Training and Testing Sets</strong><br />
+    The data is split using the train_test_split function, setting aside 20% for testing.
+  </p><br />
 
-        <p><strong onClick={() => handleHeadingClick("DefinePath")}>3. Defining Dataset Path</strong></p>
-        <p>The path where the dataset is stored is defined, guiding the code to locate and process the dataset correctly.</p> <br />
+  <p>
+    <strong onClick={() => handleHeadingClick("Step5")}>Step 5: Train the Model</strong><br />
+    A Random Forest classifier is trained with parameters set for 100 trees and a random state of 42.
+  </p><br />
 
-        <p><strong onClick={() => handleHeadingClick("LoadDataset")}>4. Loading Dataset</strong></p>
-        <p>The dataset is loaded and prepared using TensorFlow's ImageDataGenerator, which also handles the image resizing and normalization.</p> <br />
+  <p>
+    <strong onClick={() => handleHeadingClick("Step6")}>Step 6: Evaluate the Model</strong><br />
+    Model performance is assessed on the testing data with accuracy metrics.
+  </p><br />
 
-        <p><strong onClick={() => handleHeadingClick("LoadPrepData")}>5. Loading and Preparing Data</strong></p>
-        <p>A function is set up to load the data, extract images and labels, and ensure that all the data needed for training and testing is ready and accessible.</p> <br />
+  <p>
+    <strong onClick={() => handleHeadingClick("Step7")}>Step 7: Save the Model</strong><br />
+    The trained model is saved to 'equipment_monitoring_model.pkl' using joblib.
+  </p><br />
 
-        <p><strong onClick={() => handleHeadingClick("SplitData")}>6. Splitting Data into Training and Testing Sets</strong></p>
-        <p>The data is divided into training and testing sets to provide a robust evaluation of the model's performance, maintaining an unbiased approach towards model validation.</p> <br />
+  <p>
+    <strong onClick={() => handleHeadingClick("Step8")}>Step 8: Create the Dashboard</strong><br />
+    A real-time dashboard is set up for monitoring, featuring graphs and a status indicator that updates based on the model's predictions.
+  </p><br />
 
-        <p><strong onClick={() => handleHeadingClick("NormalizeReshape")}>7. Normalizing and Reshaping Features</strong></p>
-        <p>Data normalization and reshaping are critical for preparing the data to fit the input requirements of the pre-trained VGG16 model, ensuring that each input is treated equally during model training.</p> <br />
+  <p>
+    <strong onClick={() => handleHeadingClick("Step9")}>Step 9: Update Data</strong><br />
+    Data is continuously updated in real-time simulating sensor readings.
+  </p><br />
 
-        <p><strong onClick={() => handleHeadingClick("LoadVGG16")}>8. Loading Pre-trained VGG16 Model</strong></p>
-        <p>The pre-trained VGG16 model is loaded, set to extract deep features from the images. This model, trained on extensive datasets like ImageNet, provides a rich feature extraction capability.</p> <br />
+  <p>
+    <strong onClick={() => handleHeadingClick("Step10")}>Step 10: Update Graphs</strong><br />
+    Graphs for temperature, pressure, and vibration are updated every second.
+  </p><br />
 
-        <p><strong onClick={() => handleHeadingClick("ExtractFeatures")}>9. Extracting Features</strong></p>
-        <p>A function is defined to pass images through the VGG16 model and extract significant features necessary for classifying the images effectively using machine learning techniques.</p> <br />
+  <p>
+    <strong onClick={() => handleHeadingClick("Step11")}>Step 11: Update Status Indicator</strong><br />
+    A status indicator updates in real-time to reflect the equipment's condition as 'healthy' or 'unhealthy'.
+  </p><br />
 
-        <p><strong onClick={() => handleHeadingClick("ComputeCosSim")}>10. Computing Cosine Similarity</strong></p>
-        <p>Cosine similarity measures are computed between features of the training set and the test set to determine how similar the images are, aiding in the classification process based on the most similar training examples.</p> <br />
+  <p>
+    <strong onClick={() => handleHeadingClick("Step12")}>Step 12: Run the Dashboard</strong><br />
+    The dashboard runs, displaying real-time updates of the equipment's status.
+  </p><br />
 
-        <p><strong onClick={() => handleHeadingClick("EvaluateClass")}>11. Evaluating Cosine Similarity Classification</strong></p>
-        <p>The effectiveness of using cosine similarity for classification is evaluated, providing insights into the accuracy of this method in categorizing images based on learned patterns and similarities.</p> <br />
-
-        <p><strong onClick={() => handleHeadingClick("PreprocessImage")}>12. Preprocessing and Classifying New Images</strong></p>
-        <p>Functions are prepared to preprocess new images, extract their features using the pre-trained model, and classify them by comparing these features to those of the images in the training set through cosine similarity.</p> <br />
-
-        <p><strong onClick={() => handleHeadingClick("ClassifyImage")}>13. Displaying Classification Results</strong></p>
-        <p>The classification results are displayed, showing the predicted labels for new images, which helps in understanding the model's performance and its practical application in real-world scenarios.</p> <br />
-
-        <p>The Key aspects of this code are:-</p>
-        <ul>
-        <li><b>Feature Extraction:</b> Feature extraction involves identifying and extracting important characteristics or patterns from industrial equipment images.  In the context of image classification, these features can include edges, textures, shapes, and more complex structures.</li> <br />
-        {/* <img style={{width: '100%'}} src={Img1} alt="image1" /> <br /> <br />
-        <img style={{width: '100%'}} src={Img2} alt="image2" /> <br /> <br /> */}
-        <li><b>Cosine Similarity: </b> Cosine similarity measures the similarity between two vectors by comparing the angle between them. It is often used for image classification by comparing the feature vectors of images to determine how similar they are.</li>
-        
-        </ul>
-    </div>
-
+  <p>Here are some Pictures of the graph when you run them</p><br />
+  <img style={{ width: '100%' }} src={Img1} alt="image1" /><br /><br />
+  <img style={{ width: '100%' }} src={Img2} alt="image2" /><br /><br />
+  <img style={{ width: '100%' }} src={Img3} alt="image3" /><br /><br />
+</div>
         <div className="box4">
-            <div className="code-container">
+          <div className="code-container">
             <pre className="code-snippet">
-                <code className="python" >
-                {highlightedCodeSnippet ? highlightedCodeSnippet.trim() : codeSnippet2.trim()}
-                </code>
+              <code className="python" >
+              {highlightedCodeSnippet ? highlightedCodeSnippet.trim() : codeSnippet2.trim()}
+              </code>
             </pre>
-            </div>
+          </div>
         </div>
-    </div>
-    <div> 
-            <button className="button">
-            <a href="https://www.kaggle.com/code/pushkarns/unit-3-lab-1-final" target="_blank"> View Runable code</a>
-            </button>
-    </div>
-    </div>
-    );
+      </div>
+      <div> 
+          <button className="button">
+          <a href="https://www.kaggle.com/code/adityahr700/unit-3-lab-6?scriptVersionId=184233507" target="_blank"> View Runable code</a>
+          </button>
+        </div>
+      </div>
+  );
 };
 export default Lab2;
