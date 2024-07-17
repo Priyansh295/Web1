@@ -478,7 +478,7 @@ const Lab2 = () => {
     </div>
     <div> 
             <button className="button">
-            <a href="https://www.kaggle.com/code/percival224/unit-4-lab-3/notebookhttps://www.kaggle.com/code/priyansh2904/notebook8ede3a1f98/edit" target="_blank"> View Runable code</a>
+            <a href="https://www.kaggle.com/code/percival224/unit-4-lab-3" target="_blank"> View Runable code</a>
             </button>
     </div>
     </div>
