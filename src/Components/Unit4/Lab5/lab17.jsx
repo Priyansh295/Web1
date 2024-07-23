@@ -199,7 +199,7 @@ const Lab5 = () => {
               <ul>
                 <li>Download and install the Arduino IDE from <a href="https://www.arduino.cc/en/software" target="_blank" rel="noopener noreferrer">here</a>.</li>
                 <li>Connect your Arduino board to your computer using a USB cable.</li>
-                <li>Select the correct board and port in the Arduino IDE (`Tools > Board` and `Tools > Port`).</li>
+                <li>Select the correct board and port in the Arduino IDE (`Tools &gt Board` and `Tools &gt Port`).</li>
               </ul>
             </li>
             <li><b>Connect the Servo Motor:</b>
