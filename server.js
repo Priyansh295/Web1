@@ -13,10 +13,7 @@ app.use(cors()); // Enable CORS for all routes
 // ... (your existing code)
 
 // Connect to MongoDB
-mongoose.connect('mongodb://127.0.0.1:27017/student', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+mongoose.connect('mongodb://127.0.0.1:27017/student');
 // Define a mongoose schema for users
 const userSchema = new mongoose.Schema({
   username: String,
