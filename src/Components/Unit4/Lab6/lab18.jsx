@@ -796,7 +796,7 @@ const Lab2 = () => {
       <ParticleCanvas />
       <div className="Layout" style={{ display: "flex", justifyContent: "space-around", color: '#09F' }}>
       <div className="box3">
-        <h2>Industrial Equipment Monitoring System</h2> <br />
+        <h2>Self Diagnosing Machine Using Sensor Data</h2> <br />
   <p>
     <strong onClick={() => handleHeadingClick("Step1")}>Step 1: Generate Training Data</strong><br />
     Synthetic sensor readings are generated to simulate temperature, pressure, and vibration from industrial equipment. Data points are classified as 'healthy' or 'unhealthy' based on defined conditions.
@@ -874,7 +874,7 @@ const Lab2 = () => {
       </div>
       <div> 
           <button className="button">
-          <a href="https://www.kaggle.com/code/adityahr700/unit-3-lab-6?scriptVersionId=184233507" target="_blank"> View Runable code</a>
+          <a href="https://www.kaggle.com/code/adityahr700/unit-4-lab-6" target="_blank"> View Runable code</a>
           </button>
         </div>
       </div>
