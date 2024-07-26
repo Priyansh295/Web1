@@ -3,11 +3,8 @@ import hljs from 'highlight.js/lib/core';
 import python from 'highlight.js/lib/languages/python';
 import 'highlight.js/styles/github.css';
 import 'ace-builds/webpack-resolver'; 
-//import Img1 from './imgs/image1.png';
-// import Img2 from './imgs/image2.png';
-// import Img3 from './imgs/image3.png';
-// import Img4 from './imgs/image4.png';
-// import Img5 from './imgs/image5.png';
+import Img1 from './imgs/image1.jpg';
+import vid1 from './imgs/video1.mp4';
 import './lab17.css';
 
 hljs.registerLanguage('python', python);
@@ -208,6 +205,7 @@ const Lab5 = () => {
                 <li>Connect the power and ground pins of the servo motor to the 5V and GND pins on the Arduino, respectively.</li>
               </ul>
             </li>
+            <img style={{width: '100%'}} src={Img1} alt="image1" /> <br /> <br />
             <li><b>Upload Arduino Code:</b>
               <ul>
                 <li>Open the Arduino IDE and paste the following code:</li>
@@ -238,7 +236,11 @@ const Lab5 = () => {
             </li>
           </ol>
           <br />
-          <p><b>Conclusion:</b> This experiment demonstrates how to create a voice-controlled system using Python and Arduino to adjust a servo motor.</p>
+          <p><b>Conclusion:</b> This experiment demonstrates how to create a voice-controlled system using Python and Arduino to adjust a servo motor.</p> <br />
+          <video width="100%" height="50%" controls>
+            <source src={vid1} type="video/mp4"/>
+            Your browser does not support the video tag.
+          </video>
         </div>
         <div className="box4">
           <div className="code-container">
@@ -248,16 +250,16 @@ const Lab5 = () => {
               </code>
             </pre>
           </div>
-          <div>
-            <button onClick={() => handleHeadingClick("Python")}>Show Python Code</button>
-            <button onClick={() => handleHeadingClick("Arduino")}>Show Arduino Code</button>
-          </div>
         </div>
       </div>
       <div>
-        <button className="button">
-          <a href="https://www.kaggle.com/code/percival224/unit-4-lab-3" target="_blank" rel="noopener noreferrer"> View Runnable Code</a>
-        </button>
+        <p>Note: Please note that for this lab you will need to run two seperate pieces of code, the .c file is to be run on the aruino IDE and the .py file needs to be run on VS code concurrently after making the appropriate connections</p> <br />
+        <button className="button" style={{marginRight: "20px"}}>
+            <a href="/VSCodeU4L5.py" download={"VSCodeU4L5.py"}>For VS Code</a>
+            </button>
+            <button className="button" style={{padding: "10px"}}>
+            <a href="/arduinoU4L5.c" download={"arduinoU4L5.c"}>For Arduino IDE</a>
+          </button>
       </div>
     </div>
   );

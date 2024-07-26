@@ -4,8 +4,8 @@ import python from 'highlight.js/lib/languages/python';
 import 'highlight.js/styles/github.css';
 import 'ace-builds/webpack-resolver'; 
 import Img1 from './imgs/image1.png';
-// import Img2 from './imgs/image2.png';
-// import Img3 from './imgs/image3.png';
+import Img2 from './imgs/image2.png';
+import Img3 from './imgs/image3.png';
 // import Img4 from './imgs/image4.png';
 // import Img5 from './imgs/image5.png';
 import './lab15.css';
@@ -403,6 +403,7 @@ const Lab2 = () => {
             </ul>
         </li>
     </ul> <br />
+    <img style={{width: '100%'}} src={Img2} alt="image2" /> <br /> <br />
 
     <p><b onClick={() => handleHeadingClick("OurChatbot")}>What will our chatbot be?</b></p>
     <p>Our chatbot will be a rule-based system designed to answer common questions by recognizing user queries and providing predefined responses. It will use natural language understanding (NLU) to determine the intent behind a question and then deliver one of several preset answers to create a more dynamic conversation. This will make it useful for handling frequently asked questions, such as business hours or contact information, in an efficient and user-friendly manner.</p> <br />
@@ -464,6 +465,7 @@ const Lab2 = () => {
     <p><strong onClick={() => handleHeadingClick("Step9")}>Step 9: Deletion</strong></p>
     <p>We can run this block if we intend to make new intents and remove the previous ones. In addition, the <code>delete_all_intents()</code> function ensures that you can start from a clean slate by deleting all existing intents in the Dialogflow agent. This is useful for resetting the agent during development and testing.</p>
     
+    <img style={{width: '100%'}} src={Img3} alt="image3" /> <br /> <br />
 </div>
 
         <div className="box4">
